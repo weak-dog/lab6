@@ -49,7 +49,7 @@ statement:
 
 semi_stmt: SEMICOLON ;
 
-block: LB statements RB {$$=$2;};
+block: LB statements RB {$$=new TreeNode($2->lineno,NODE_STMT);$$->sType=STMT_BLOCK;$$->child[0]=$2;};
 
 decl_stmt:
   decl_stmt COMMA decl_assign_stmt {
@@ -66,6 +66,7 @@ decl_stmt:
     $$->child[0]=$1;
     $$->child[1]=$2;
     $$->sType=STMT_DECL;
+    $2->valType=$1->valType;
     sb.insert($2->varName);
 }
 | T decl_assign_stmt {
@@ -248,6 +249,11 @@ io_stmt:
     $$->child[0]=$3;
     $$->child[1]=$6;
 }
+| PRINTF LP STRING RP {
+    $$=new TreeNode($3->lineno,NODE_STMT);
+    $$->sType=STMT_PRINTF;
+    $$->child[0]=$3;
+}
 | SCANF LP expr RP {
     $$=new TreeNode($3->lineno,NODE_STMT);
     $$->sType=STMT_SCANF;
@@ -265,10 +271,15 @@ io_stmt:
     $$->child[0]=$3;
     $$->child[1]=$6;
 }
+| SCANF LP STRING RP {
+    $$=new TreeNode($3->lineno,NODE_STMT);
+    $$->sType=STMT_SCANF;
+    $$->child[0]=$3;
+}
 ;
 
 expr:
-  LP expr RP {$$=$2;}
+  LP expr RP {$$=$2;$$->valType=$2->valType;}
 | expr ADD expr {
     $$=new TreeNode($1->lineno,NODE_EXPR);
     $$->opType=OP_ADD;
@@ -315,6 +326,7 @@ expr:
     $$->opType=OP_INC;
     $$->valType=VALUE_INT;
     $$->child[0]=$2;
+    $$->valType=$2->valType;
 }
 | IDENTIFIER INC {
     $$=new TreeNode($1->lineno,NODE_EXPR);

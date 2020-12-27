@@ -75,6 +75,8 @@ void TreeNode::printNodeInfo() {
         this->printSpecialInfo();
         //打印孩子节点编号
         this->printChildrenId();
+        //打印兄弟节点编号
+        this->printSiblingId();
         cout<<endl;
     }
 }
@@ -89,6 +91,20 @@ void TreeNode::printChildrenId() {
             }
             cout<<"]";
         }    
+    }
+}
+//打印兄弟节点的序号
+void TreeNode::printSiblingId(){
+    if(this!=nullptr){
+        if(this->sibling){
+            cout<<setw(16)<<"sibling: [";
+            TreeNode* t=this->sibling;
+            while(t){
+                cout<<"@"<<t->nodeID<<" ";
+                t=t->sibling;
+            }
+            cout<<"]";
+        }
     }
 }
 //打印节点特殊信息
@@ -115,7 +131,7 @@ void TreeNode::printSpecialInfo() {
             cout<<setw(16)<<" var_name: "<<this->varName;
         break;
         case NODE_EXPR://如果是表达式，打印运算类型
-            cout<<setw(16)<<" operator: "<<opType2String(this->opType);
+            cout<<setw(16)<<" operator: "<<opType2String(this->opType)<<setw(16)<<"valuetype: "<<getTypeInfo(valType);
         break;
         case NODE_STMT://如果是语句，打印语句类型
             cout<<setw(16)<<" stmt: "<<sType2String(this->sType);
@@ -212,8 +228,6 @@ string TreeNode::opType2String(int type){
             return "==";
         case OP_NEQ: 
             return "!=";    
-        case OP_ASSG: 
-            return "=";
     }
     return "?";    
 }
@@ -234,29 +248,10 @@ string TreeNode::getTypeInfo(int type) {
     }
     return "?";
 }
-
+//构造函数
 Tree::Tree(TreeNode* n){
     this->root=n;
 }
-//生成标签
-// void tree::gen_label(){
-//     TreeNode* p=root;
-//     p->label.begin_label="_start";
-//     recursive_get_label(p);
-// }
-//TODO生成汇编代码
-// void tree::gen_code(ostream $out){
-//     gen_header(out);
-//     gen_decl(out,root);//TODO 通过符号表生成全局变量
-//     //TreeNode* p=root->child;
-//     //if(p->);
-//     out<<"\t.text"<<endl;
-//     out<<"\t.global _start"<<endl;
-//     recursive_gen_code(out,root);
-//     if(root->label,next!="")
-//         out<<root->label.next_label<<":"<<endl;
-//     out<<"\tret"<<endl;
-// }
 //类型检查
 void Tree::type_check(TreeNode*t){
     if(t!=nullptr){
@@ -349,7 +344,7 @@ void Tree::type_check(TreeNode*t){
                             cerr<<"NEQ error at lineno: "<<t->lineno<<endl;
                         break;
                     case OP_NOT:
-                        if(t->child[0]->valType!=VALUE_BOOL)
+                        if(t->child[0]->valType!=VALUE_BOOL&&t->child[0]->valType!=VALUE_INT)
                             cerr<<"NOT error at lineno: "<<t->lineno<<endl;
                         break;
                 }
@@ -366,112 +361,213 @@ void Tree::type_check(TreeNode*t){
         type_check(t->sibling);
     }
 }
-//TODO 不知道是个啥
-// void tree::get_temp_var(Node *t);
+//生成标签
+void Tree::get_label(){
+    TreeNode* p=root;
+    p->label.begin_label="_start";
+    recursive_get_label(p);//递归生成label
+}
 //新建一个标签
-// string tree::new_label(void){
-//     char tmp[20];
-//     sprintf(tmp,"@%d",tree::label_seq);
-//     tree::label_seq++;
-//     return tmp;
-// }
+string Tree::new_label(void){
+    char tmp[20];
+    sprintf(tmp,"@%d",Tree::label_seq);
+    Tree::label_seq++;
+    return tmp;
+}
 //递归获取标签
-// void tree::recursive_get_label(Node *t){
-//     if(t->nodeType==NODE_STMT)
-//         stmt_get_label(t);
-//     if(t->nodeType==NODE_EXPR)
-//         expr_get_label(t);
-// }
+void Tree::recursive_get_label(TreeNode *t){
+    if(t->nodeType==NODE_STMT)
+        stmt_get_label(t);
+    if(t->nodeType==NODE_EXPR)
+        expr_get_label(t);
+}
 //语句生成标签
-// void tree::stmt_get_label(Node *t){
-//     switch (t->sType){
-//         case STMT_WHILE:
-//             {
-//                 Node *last;
-//                 Node *p;
-//                 for (p = t->child[0]; p->kind == DECL_NODE; p = p->sibling) ;
-
-//                 p->label.begin_label = t->label.begin_label;
-//                 for (; p; p = p->sibling)
-//                 {
-//                     last = p;
-//                     recursive_get_label(p);
-//                 }
-//                 t->label.next_label = last->label.next_label;
-//                 if (t->sibling)
-//                     t->sibling->label.begin_label = t->label.next_label;
-//             }
-//             break;
-
-//         case STMT_WHILE:
-//             {
-//                 TreeNode* child1=t->child;//bool_expr
-//                 TreeNode* child2=t->child->sibling;//statements
-//                 if (t->label.begin_label == "")
-//                     t->label.begin_label = new_label();
-//                 child2->label.next_label = t->label.begin_label;
-//                 child2->label.begin_label = child1->label.true_label = new_label();
-//                 if (t->label.next_label == "")
-//                     t->label.next_label = new_label();
-//                 child1->label.false_label = t->label.next_label;
-//                 if (t->sibling)
-//                     t->sibling->label.begin_label = t->label.next_label;
-//                 recursive_get_label(child1);
-//                 recursive_get_label(child2);
-//             }
-//         case STMT_IFELSE://TODO fucK
-//             {
-
-//             }
-//     /* ... */
-// 	}
-// }
+void Tree::stmt_get_label(TreeNode *t){
+    TreeNode* e = t->child[0];
+	TreeNode* s1 = t->child[1];
+	TreeNode* s2 = t->child[2];
+	TreeNode* s3 = t->child[3];
+	int i;
+	switch (t->sType) {
+	case STMT_IFELSE:
+		if (s2 == NULL) {//if(e) s1
+			if (e->label.true_label == "")
+				e->label.true_label = new_label();
+			if (t->label.next_label == "")
+				t->label.next_label = new_label();
+			e->label.false_label = t->label.next_label;
+			s1->label.next_label = t->label.next_label;
+		}
+		else {//if(e) s1 else s2
+			if (e->label.true_label == "")
+				e->label.true_label = new_label();
+			if (t->label.next_label == "")
+				t->label.next_label = new_label();
+			e->label.false_label = new_label();
+			s1->label.next_label = t->label.next_label;
+			s2->label.next_label = t->label.next_label;
+		}
+		break;
+	case STMT_WHILE://while(e) s1
+		t->label.begin_label = new_label();
+		e->label.true_label = new_label();
+		if (t->label.next_label == "")
+			t->label.next_label = new_label();
+		e->label.false_label = t->label.next_label;
+		s1->label.next_label = t->label.begin_label;
+		break;
+	case STMT_FOR: //for(e;s1;s2) s3
+		t->label.begin_label = new_label();
+		s1->label.true_label = new_label();
+		if (t->label.next_label == "")
+			t->label.next_label = new_label();
+		s1->label.false_label = t->label.next_label;
+		s1->label.next_label = t->label.begin_label;
+		break;
+	case STMT_BLOCK: // 复合语句，递归
+		TreeNode* p = t->child[0];
+		for (; p; p = p->sibling) {
+			if (p->sibling == NULL)
+				p->label.next_label = t->label.next_label;
+			recursive_get_label(p);
+		}
+		break;
+	}
+}
 //表达式生成标签
-// void tree::expr_get_label(Node *t){
-//     if(t->type!=BOOL)
-//         return;
-//     TreeNode* 
-// }
+void Tree::expr_get_label(TreeNode *t)
+{
+	if (t->valType != VALUE_BOOL)
+		return;
+	TreeNode *e1 = t->child[0];
+	TreeNode *e2 = t->child[1];
+	switch (t->opType)
+	{
+	case OP_AND:
+        if(e1->label.true_label=="")
+            e1->label.true_label=new_label();
+        if(t->label.false_label=="")
+            t->label.false_label=new_label();
+        if(t->label.true_label=="")
+            t->label.true_label=new_label();
+        e2->label.true_label=t->label.true_label;
+        e1->label.false_label=e2->label.false_label=t->label.false_label;
+        break;
+	case OP_OR:
+		if (t->label.true_label == "")
+			t->label.true_label = new_label();
+		if (t->label.false_label == "")
+			t->label.false_label = new_label();
+		e1->label.false_label = new_label();
+		e2->label.false_label = t->label.false_label;
+		e1->label.true_label = e2->label.true_label = t->label.true_label;
+		break;
+    case OP_NOT:
+        if (t->label.true_label == "")
+			t->label.true_label = new_label();
+		if (t->label.false_label == "")
+			t->label.false_label = new_label();
+		e1->label.false_label = t->label.true_label;
+		e1->label.true_label = t->label.false_label;
+		break;
+	}
+}
+//TODO生成汇编代码
+void Tree::gen_code(){    
+    gen_header();
+	gen_decl();
+    cout << endl << endl << "# your asm code here" << endl;
+	cout << "\t.text" << endl;
+    cout << "\t.globl _start" << endl;
+	recursive_gen_code(root);
+	if (root->label.next_label != "")
+		cout << root->label.next_label << ":" << endl;
+	cout << "\tret" << endl;
+}
+//为表达式节点生成临时变量，每个表达式结点都是一个临时变量
+void Tree::get_temp_var(TreeNode *t)
+{
+    if(t!=nullptr){
+        if(t->nodeType==NODE_EXPR&&(t->opType>=OP_ADD&&t->opType<=OP_NEQ)){
+            t->temp_var = Tree::temp_var_seq;
+	        Tree::temp_var_seq++;
+        }
+        int i=0;
+        while(i<4&&t->child[i++]!=nullptr){
+            Tree::get_temp_var(t->child[i-1]);
+        }
+        Tree::get_temp_var(t->sibling);
+    }
+}
+//全局变量生成代码
+void Tree::gen_decl(){
+    cout << endl << "# define variables and temp variables here" << endl;
+	cout << "\t.bss" << endl;
+    //符号表中的全局变量
+    for(int i=0;i<sb.size;i++){
+        cout<<"_"<<sb.name[i]<<":"<<endl;
+        cout<<"\t.zero\t4"<<endl;
+        cout<<"\t.align\t4"<<endl;
+    }
+    //给所有表达式节点生成临时变量
+	for (int i = 0; i < temp_var_seq; i++){
+		cout << "t" <<  i << ":" << endl;
+        cout << "\t.zero\t4" << endl;
+        cout << "\t.align\t4" << endl;
+	}
+}
 //生成汇编语言头部
-// void tree::gen_header(ostream &out){
-//     out << "# my asm code header here" << endl;
-// }
-//全局变量生成代码 //TODO符号表还没弄
-// void tree::gen_decl(ostream &out, Node *t){
-//     out << endl << "# define variables and temp variables here" << endl;
-// 	out << "\t.bss" << endl;
-// 	for (; t->sType == STMT_DECL; t = t->sibling){
-// 		for (TreeNode *p = t->children; p; p = p->sibling)
-// 			if (p->valType == INT)//TODO
-// 				out << "_" << symtbl.getname(p->attr.symtbl_seq) << ":" << endl;
-//                 out << "\t.zero\t4" << endl;
-//                 out << "\t.align\t4" << endl;
-// 	}
-// 	for (int i = 0; i < temp_var_seq; i++){
-// 		out << "t" <<  i << ":" << endl;
-//         out << "\t.zero\t4" << endl;
-//         out << "\t.align\t4" << endl;
-// 	}
-// }
+void Tree::gen_header(){
+    cout << "# my asm code header here" << endl;
+}
 //递归生成汇编代码
-// void tree::recursive_gen_code(ostream &out, Node *t){
-//     if(t->nodeType==NODE_STMT)
-//         stmt_gen_code(out,t);
-//     else if(t->nodeType==NODE_EXPR)
-//         expr_gen_code(out,t);
-// }
+void Tree::recursive_gen_code(TreeNode *t){
+    if(t->nodeType==NODE_STMT)
+        stmt_gen_code(t);
+    else if(t->nodeType==NODE_EXPR)
+        expr_gen_code(t);
+    else{//根节点program，只有一个孩子statement
+        recursive_gen_code(t->child[0]);
+    }
+}
 //语句生成汇编代码
-// void tree::stmt_gen_code(ostream &out, Node *t){
-//     if(t->sType==STMT_BLOCK){
-//         TreeNode* tmp=t->child;
-//         while(tmp->sibling){
-//             recursive_gen_code(out,tmp);
-//             for()
-//         }
-//         for(int i=0;i->child;i++)
-//     }
-// }
+void Tree::stmt_gen_code(TreeNode *t)
+{
+    switch(t->sType){
+        case STMT_BLOCK:
+        {
+            for (int i = 0; t->child[i]; i++){
+			    recursive_gen_code(t->child[i]);
+		    }
+            for (TreeNode *p = t->sibling; p; p = p->sibling)
+			    recursive_gen_code(p);
+        }
+    }
+	if (t->sType == STMT_BLOCK)
+	{
+		for (int i = 0; t->child[i]; i++)
+		{
+			recursive_gen_code(t->child[i]);
+			
+		}
+        for (TreeNode *p = t->sibling; p; p = p->sibling)
+			recursive_gen_code(p);
+	}
+	else if (t->sType == STMT_WHILE)
+	{
+		if (t->label.begin_label != "")
+			cout << t->label.begin_label << ":" << endl;
+		recursive_gen_code(t->child[0]);
+		recursive_gen_code(t->child[1]);
+		cout << "\tjmp " << t->label.begin_label << endl;
+	}
+	else if (t->sType == STMT_FOR)
+	{
+		/* ... */
+	}
+    /* ... */
+}
 //表达式生成汇编代码
-// void tree::expr_gen_code(ostream &out, Node *t){
+void Tree::expr_gen_code(TreeNode *t){
 
-// }
+}

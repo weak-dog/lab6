@@ -49,7 +49,6 @@ enum OperatorType
     OP_GE,      // >=
     OP_EQ,      // ==
     OP_NEQ,     // !=
-    OP_ASSG,    // = 
 };
 
 //语句节点子类型
@@ -71,10 +70,10 @@ enum StmtType
 
 //标签属性
 struct Label {
-	string true_label;
-	string false_label;
-	string begin_label;
-	string next_label;
+	string true_label="";
+	string false_label="";
+	string begin_label="";
+	string next_label="";
 };
 
 //符号表
@@ -96,10 +95,11 @@ public:
     int valType;                    //节点值的类型
     int sType;                      //语句结点类型
     int opType;                     //表达式运算符类型
-    string varName;                 //TODO变量名
+    int temp_var;                   //分配的临时变量
+    string varName;                 //变量名
     TreeNode* child[MAX_CHILD];     //孩子结点
     TreeNode* sibling;              //兄弟结点
-    Label lable;                    //标签
+    Label label;                    //标签
 public:
     TreeNode(int lineno, int type); //构造函数         
     void addSibling(TreeNode*);     //添加兄弟结点
@@ -107,6 +107,7 @@ public:
     void printAST();                //递归打印AST，输出自己信息+孩子id，之后递归打印孩子和兄弟。
     void printNodeInfo();           //打印结点信息
     void printChildrenId();         //打印孩子结点的序号
+    void printSiblingId();          //打印兄弟结点的序号
     void printSpecialInfo();        //打印结点特殊信息
     static string nodeType2String (int type);   //结点类型转化为字符串
     static string sType2String (int type);      //语句类型枚举转化为字符串
@@ -119,21 +120,22 @@ class Tree{
 public:
     TreeNode* root;                                     //根节点
     int label_seq=0;                                    //下一个生成标签的序号
+    int temp_var_seq = 0;                               //临时变量的序号
 public:
-    Tree(TreeNode* n);                                  //构造函数
-    void get_label();                                   //生成标签
-    void gen_code(ostream $out);                        //生成汇编代码
-    void type_check(TreeNode* t);                                  //类型检查
-	void get_temp_var(TreeNode *t);                     //TODO
-	string new_label(void);                             //新建一个标签
-	void recursive_get_label(TreeNode *t);              //递归获取标签
-	void stmt_get_label(TreeNode *t);                   //语句生成标签
-	void expr_get_label(TreeNode *t);                   //表达式生成标签
-	void gen_header(ostream &out);                      //生成汇编语言头部
-	void gen_decl(ostream &out, TreeNode *t);           //全局变量生成代码
-	void recursive_gen_code(ostream &out, TreeNode *t); //递归生成汇编代码
-	void stmt_gen_code(ostream &out, TreeNode *t);      //语句生成汇编代码
-	void expr_gen_code(ostream &out, TreeNode *t);      //表达式生成汇编代码
+    Tree(TreeNode* n);                                  //构造函数√
+    void type_check(TreeNode* t);                       //类型检查√
+    void get_label();                                   //生成标签√
+    string new_label(void);                             //新建一个标签√
+    void recursive_get_label(TreeNode *t);              //递归获取标签√
+    void stmt_get_label(TreeNode *t);                   //语句生成标签√
+	void expr_get_label(TreeNode *t);                   //表达式生成标签√
+    void gen_code();                                    //生成汇编代码
+	void get_temp_var(TreeNode *t);                     //为表达式节点生成临时变量√
+    void gen_decl();                                    //全局变量生成代码√
+	void gen_header();                                  //生成汇编语言头部
+	void recursive_gen_code(TreeNode *t);               //递归生成汇编代码√
+	void stmt_gen_code(TreeNode *t);                    //语句生成汇编代码
+	void expr_gen_code(TreeNode *t);                    //表达式生成汇编代码
 };
 
 #endif
