@@ -1,11 +1,11 @@
 #include "tree.h"
 static int nodeid=0;
-
+extern symbolTable sb;
 //插入符号表，检查是否重复定义
 void symbolTable::insert(string id){
     if(search(id)){
         //重复定义
-        cerr<<"重复定义符号: "<<id<<endl;
+        cout<<"重复定义符号: "<<id<<endl;
     }else{
         name[size]=id;
         size++;
@@ -19,6 +19,14 @@ bool symbolTable::search(string id){
         }
     }
     return false;
+}
+//打印符号表
+void symbolTable::display(){
+    cout<<"打印符号表: ";
+    for(int i=0;i<size;i++){
+        cout<<name[i]<<" ";
+    }
+    cout<<endl;
 }
 //构造函数
 TreeNode::TreeNode(int lineno, int type) {
@@ -227,8 +235,9 @@ string TreeNode::getTypeInfo(int type) {
     return "?";
 }
 
-
-
+Tree::Tree(TreeNode* n){
+    this->root=n;
+}
 //生成标签
 // void tree::gen_label(){
 //     TreeNode* p=root;
@@ -249,104 +258,114 @@ string TreeNode::getTypeInfo(int type) {
 //     out<<"\tret"<<endl;
 // }
 //类型检查
-// void tree::type_check(TreeNode *t){
-//     switch(t->nodeType){
-//         case NODE_STMT:
-//             switch(t->stype){
-//                 case STMT_IF:
-//                     if(t->child->valType!=BOOL)
-//                     cerr<<"Bad boolean type at line: "<<t->lineno<<endl;    
-//                     break;
-//                 case STMT_WHILE:
-//                     if(t->child->valType!=BOOL)
-//                     cerr<<"Bad boolean type at line: "<<t->lineno<<endl;    
-//                     break;
-//                 case STMT_ASSIGN:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"Assign error type at line: "<<t->lineno<<endl;
-//                     break;
-//                 case STMT_FOR:
-//                     if(t->child->sibling!=BOOL&&t->child->sibling->nodeType!=STMT_NULL)
-//                         cerr<<"Bad boolean type at line: "<<t->lineno<<endl;    
-//                     break;
-//             }
-//             break;
-//         case NODE_EXPR:
-//             switch(t->optype){
-//                 case OP_ADD:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"Bad add type at line: "<<t->lineno<<<endl;
-//                     break;
-//                 case OP_SUB:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"Bad sub type at line: "<<t->lineno<<<endl;
-//                     break;
-//                 case OP_MUL:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"Bad mul type at line: "<<t->lineno<<<endl;
-//                     break;
-//                 case OP_DIV:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"Bad div type at line: "<<t->lineno<<<endl;
-//                     break;
-//                 case OP_MOD:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"Bad mod type at line: "<<t->lineno<<<endl;
-//                     break;
-//                 case OP_LE:
-//                     if(t->child->valType!=t->child->sibling->valType||t->child->valType!=INT)
-//                         cerr<<"Compare error at line: "<<t->lineno<<endl;
-//                     break;
-//                     break;
-//                 case OP_GE:
-//                     if(t->child->valType!=t->child->sibling->valType||t->child->valType!=INT)
-//                         cerr<<"Compare error at line: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_LT:
-//                     if(t->child->valType!=t->child->sibling->valType||t->child->valType!=INT)
-//                         cerr<<"Compare error at line: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_GT:
-//                     if(t->child->valType!=t->child->sibling->valType||t->child->valType!=INT)
-//                         cerr<<"Compare error at line: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_AND:
-//                     if(t->child->valType!=t->child->sibling->valType||t->child->valType!=BOOL)
-//                         cerr<<"AND error at line: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_OR:
-//                     if(t->child->valType!=t->child->sibling->valType||t->child->valType!=BOOL)
-//                         cerr<<"OR error at line: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_DEC:
-//                     if(t->child->valType!=INT)
-//                         cerr<<"DEC error at line: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_INC:
-//                     if(t->child->valType!=INT)
-//                         cerr<<"INC error at lineno: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_MINUS:
-//                     if(t->child->valType!=INT)
-//                         cerr<<"MINUS error at lineno: "<<t->lineno<<endl;
-//                     break;
-//                 case OP_EQ:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"EQ error at lineno: "<<t->lineno<<end;
-//                     break;
-//                 case OP_NEQ:
-//                     if(t->child->valType!=t->child->sibling->valType)
-//                         cerr<<"NEQ error at lineno: "<<t->lineno<<end;
-//                     break;
-//                 case OP_NOT:
-//                     if(t->child->valType!=BOOL)
-//                         cerr<<"NOT error at lineno: "<<t->lineno<<endl;
-//                     break;
-//             }
-//             break;
-//         break;
-//     }
-// }
+void Tree::type_check(TreeNode*t){
+    if(t!=nullptr){
+        switch(t->nodeType){
+            case NODE_STMT:
+                switch(t->sType){
+                    case STMT_IFELSE:
+                        if(t->child[0]->valType!=VALUE_BOOL)
+                            cout<<"Bad boolean type at line: "<<t->lineno<<endl;  
+                        break;
+                    case STMT_WHILE:
+                        if(t->child[0]->valType!=VALUE_BOOL)
+                            cout<<"Bad boolean type at line: "<<t->lineno<<endl;    
+                        break;
+                    case STMT_ASSIGN:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
+                        break;
+                    case STMT_FOR:
+                        if(t->child[1]->valType!=VALUE_BOOL)//TODO&&t->child[1]->nodeType!=STMT_NULL)
+                            cerr<<"Bad boolean type at line: "<<t->lineno<<endl;    
+                        break;
+                }
+                break;
+            case NODE_EXPR:
+                switch(t->opType){
+                    case OP_ADD:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Bad add type at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_SUB:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Bad sub type at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_MUL:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Bad mul type at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_DIV:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Bad div type at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_MOD:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Bad mod type at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_LE:
+                        if(t->child[0]->valType!=t->child[1]->valType||t->child[0]->valType!=VALUE_INT)
+                            cerr<<"Compare error at line: "<<t->lineno<<endl;
+                        break;
+                        break;
+                    case OP_GE:
+                        if(t->child[0]->valType!=t->child[1]->valType||t->child[0]->valType!=VALUE_INT)
+                            cerr<<"Compare error at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_LT:
+                        if(t->child[0]->valType!=t->child[1]->valType||t->child[0]->valType!=VALUE_INT)
+                            cerr<<"Compare error at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_GT:
+                        if(t->child[0]->valType!=t->child[1]->valType||t->child[0]->valType!=VALUE_INT)
+                            cerr<<"Compare error at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_AND:
+                        if(t->child[0]->valType!=t->child[1]->valType||t->child[0]->valType!=VALUE_BOOL)
+                            cerr<<"AND error at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_OR:
+                        if(t->child[0]->valType!=t->child[1]->valType||t->child[0]->valType!=VALUE_BOOL)
+                            cerr<<"OR error at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_DEC:
+                        if(t->child[0]->valType!=VALUE_INT)
+                            cerr<<"DEC error at line: "<<t->lineno<<endl;
+                        break;
+                    case OP_INC:
+                        if(t->child[0]->valType!=VALUE_INT)
+                            cerr<<"INC error at lineno: "<<t->lineno<<endl;
+                        break;
+                    case OP_MINUS:
+                        if(t->child[0]->valType!=VALUE_INT)
+                            cerr<<"MINUS error at lineno: "<<t->lineno<<endl;
+                        break;
+                    case OP_EQ:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"EQ error at lineno: "<<t->lineno<<endl;
+                        break;
+                    case OP_NEQ:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"NEQ error at lineno: "<<t->lineno<<endl;
+                        break;
+                    case OP_NOT:
+                        if(t->child[0]->valType!=VALUE_BOOL)
+                            cerr<<"NOT error at lineno: "<<t->lineno<<endl;
+                        break;
+                }
+                break;
+            case NODE_VAR:
+                if(!sb.search(t->varName))
+                    cerr<<"Uninitialized variable at lineno: "<<t->lineno<<endl;
+                break;
+        }
+        int i=0;
+        while(i<4&&t->child[i++]!=nullptr){
+            type_check(t->child[i-1]);
+        }
+        type_check(t->sibling);
+    }
+}
 //TODO 不知道是个啥
 // void tree::get_temp_var(Node *t);
 //新建一个标签

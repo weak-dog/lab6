@@ -84,6 +84,7 @@ public:
     int size=0;
     void insert(string id);
     bool search(string id);
+    void display();
 };
 
 //树节点
@@ -119,9 +120,10 @@ public:
     TreeNode* root;                                     //根节点
     int label_seq=0;                                    //下一个生成标签的序号
 public:
+    Tree(TreeNode* n);                                  //构造函数
     void get_label();                                   //生成标签
     void gen_code(ostream $out);                        //生成汇编代码
-    void type_check(TreeNode *t);                       //类型检查
+    void type_check(TreeNode* t);                                  //类型检查
 	void get_temp_var(TreeNode *t);                     //TODO
 	string new_label(void);                             //新建一个标签
 	void recursive_get_label(TreeNode *t);              //递归获取标签

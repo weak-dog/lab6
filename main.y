@@ -2,7 +2,7 @@
     #include "common.h"
     #define YYSTYPE TreeNode *
     TreeNode* root;
-    Tree tree->root=root;
+    symbolTable sb;
     extern int lineno;
     int yylex();
     int yyerror( char const * );
@@ -52,27 +52,39 @@ semi_stmt: SEMICOLON ;
 block: LB statements RB {$$=$2;};
 
 decl_stmt:
-  decl_stmt COMMA assign_stmt {
-    $$=$1;
-    $$->addSibling($3);
+  decl_stmt COMMA decl_assign_stmt {
+      $$=$1;
+      $$->addSibling($3);
 }
 | decl_stmt COMMA IDENTIFIER {
     $$=$1;
     $$->addSibling($3);
+    sb.insert($3->varName);
 }
 | T IDENTIFIER {
     $$=new TreeNode($1->lineno,NODE_STMT);
     $$->child[0]=$1;
     $$->child[1]=$2;
     $$->sType=STMT_DECL;
+    sb.insert($2->varName);
 }
-| T assign_stmt {
+| T decl_assign_stmt {
     $$=new TreeNode($1->lineno,NODE_STMT);
     $$->child[0]=$1;
     $$->child[1]=$2;
     $$->sType=STMT_DECL;
 }
 ;
+
+decl_assign_stmt:
+  IDENTIFIER ASSIGN expr {
+    $$=new TreeNode($1->lineno,NODE_STMT);
+    $$->sType=STMT_ASSIGN;
+    $$->child[0]=$1;
+    $$->child[1]=$3;
+    $1->valType=VALUE_INT;
+    sb.insert($1->varName);
+};
 
 assign_stmt:
   IDENTIFIER ASSIGN expr {
@@ -132,7 +144,7 @@ for_stmt:
     $$->child[2]=$7;
     $$->child[3]=$9;
 }
-| FOR LP SEMICOLON expr SEMICOLON expr RP statements {//TODO for语句缺少怎么处理
+| FOR LP SEMICOLON expr SEMICOLON expr RP statements {
     $$=new TreeNode($4->lineno,NODE_STMT);
     $$->sType=STMT_FOR;
     TreeNode* node=new TreeNode($4->lineno,NODE_NULL);

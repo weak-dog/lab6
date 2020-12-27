@@ -104,6 +104,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->varName = string(yytext);
     yylval = node;
+    node->valType=VALUE_INT;
     return IDENTIFIER;
 }
 

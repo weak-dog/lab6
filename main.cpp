@@ -3,6 +3,7 @@
 
 extern TreeNode *root;
 extern FILE *yyin;
+extern symbolTable sb;
 extern int yyparse();
 
 using namespace std;
@@ -21,9 +22,12 @@ int main(int argc, char *argv[])
         }
     }
     yyparse();
-    if(root != NULL) {
-        root->genNodeId();
-        root->printAST();
+    Tree tree(root);
+    if(tree.root != NULL) {
+        sb.display();
+        tree.root->genNodeId();
+        tree.root->printAST();
+        tree.type_check(root);
     }
     return 0;
 }
