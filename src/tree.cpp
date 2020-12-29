@@ -899,7 +899,7 @@ void Tree::expr_gen_code(TreeNode *t){
             cout<<"_"<<e1->varName<<", %edx"<<endl;
         else if(e1->nodeType==NODE_CONST)
             cout<<"$"<<e1->int_val<<", %edx"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+        else cout<<"t"<<e1->temp_var<<", %edx"<<endl;
         cout<<"\tmovl %edx, %eax"<<endl;
         cout<<"\tsarl $31, %edx"<<endl;
         cout<<"movl ";
@@ -919,10 +919,10 @@ void Tree::expr_gen_code(TreeNode *t){
             cout<<"_"<<e1->varName<<", %edx"<<endl;
         else if(e1->nodeType==NODE_CONST)
             cout<<"$"<<e1->int_val<<", %edx"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+        else cout<<"t"<<e1->temp_var<<", %edx"<<endl;
         cout<<"\tmovl %edx, %eax"<<endl;
         cout<<"\tsarl $31, %edx"<<endl;
-        cout<<"movl ";
+        cout<<"\tmovl ";
         if(e2->nodeType==NODE_VAR)
             cout<<"_"<<e2->varName<<", %ebx"<<endl;
         else if(e2->nodeType==NODE_CONST)

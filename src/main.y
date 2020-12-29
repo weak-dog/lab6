@@ -144,7 +144,7 @@ if_stmt:
 ;
 
 for_stmt:
-  FOR LP decl_stmt SEMICOLON expr SEMICOLON expr RP block {
+  FOR LP decl_stmt SEMICOLON expr SEMICOLON statement RP block {
     $$=new TreeNode($3->lineno,NODE_STMT);
     $$->sType=STMT_FOR;
     $$->child[0]=$3;
@@ -152,7 +152,7 @@ for_stmt:
     $$->child[2]=$7;
     $$->child[3]=$9;
 }
-| FOR LP SEMICOLON expr SEMICOLON expr RP block {
+| FOR LP SEMICOLON expr SEMICOLON statement RP block {
     $$=new TreeNode($4->lineno,NODE_STMT);
     $$->sType=STMT_FOR;
     TreeNode* node=new TreeNode($4->lineno,NODE_NULL);
@@ -161,7 +161,7 @@ for_stmt:
     $$->child[2]=$6;
     $$->child[3]=$8;
 }
-| FOR LP decl_stmt SEMICOLON SEMICOLON expr RP block {
+| FOR LP decl_stmt SEMICOLON SEMICOLON statement RP block {
     $$=new TreeNode($3->lineno,NODE_STMT);
     $$->sType=STMT_FOR;
     TreeNode* node=new TreeNode($3->lineno,NODE_NULL);
@@ -199,7 +199,7 @@ for_stmt:
     $$->child[2]=node2;
     $$->child[3]=$7;
 }
-| FOR LP SEMICOLON SEMICOLON expr RP block {
+| FOR LP SEMICOLON SEMICOLON statement RP block {
     $$=new TreeNode($5->lineno,NODE_STMT);
     $$->sType=STMT_FOR;
     TreeNode* node1=new TreeNode($5->lineno,NODE_NULL);
