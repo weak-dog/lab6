@@ -4,13 +4,14 @@
 #include "main.tab.h"  // yacc header
 int lineno=1;
 extern strTable st;
+extern chrTable ct;
 %}
 BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
 LINECOMMENT \/\/[^\n]*
 EOL	(\r\n|\r|\n)
 WHILTESPACE [[:blank:]]
 INTEGER [0-9]+
-CHAR \'.?\'
+CHAR \'.+\'
 STRING \".+\"
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 %%
@@ -89,6 +90,14 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 {CHAR} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->valType = VALUE_CHAR;
+    node->str_val=string(yytext);
+    node->chr_val=node->str_val.at(1);
+    if(node->chr_val=='\\'){
+        node->chr2_val=node->str_val.at(2);
+        node->chr_seq=ct.insert(node->chr_val,node->chr2_val);
+    }else{
+        node->chr_seq=ct.insert(node->chr_val);
+    }
     yylval = node;
     return CHAR;
 }
@@ -97,8 +106,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     TreeNode* node=new TreeNode(lineno,NODE_CONST);
     node->valType = VALUE_STRING;
     node->str_val=string(yytext);
-    yylval=node;
     node->str_seq=st.insert(node->str_val);
+    yylval=node;
     return STRING;
 }
 

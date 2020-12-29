@@ -3,6 +3,7 @@
     #define YYSTYPE TreeNode *
     TreeNode* root;
     symbolTable sb;
+    chrTable ct;
     strTable st;
     extern int lineno;
     int yylex();

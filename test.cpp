@@ -3,13 +3,8 @@
 #include<string.h>
 using namespace std;
 int main(){
-    int a;
-    int b;
-    a = -2;
-    b = 1;
-    a = a --b + -(a + b) % -(a - b);
-    printf("%d\n",a);
-    return 0;
+    string s="\'s\'";
+    cout<<s.at(1)<<endl;
 }
 // TreeNode *node = new TreeNode(NODE_CONST, lineno);
 //     string s = string(yytext);

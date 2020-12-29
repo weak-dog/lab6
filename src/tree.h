@@ -97,8 +97,18 @@ public:
     int seq=0;
     string str[MAX_ID];
     int insert(string s);
-    void display();
 };
+
+//字符表
+class chrTable{
+public:
+    int seq=0;
+    char chr[MAX_ID];
+    char chr2[MAX_ID];
+    int insert(char c);
+    int insert(char c,char c2);
+};
+
 //树节点
 class TreeNode {
 public:
@@ -118,6 +128,8 @@ public:
     string str_val;                 //字符串常量的值
     int str_seq;                    //字符串常量对应的变量的序号
     char chr_val;                   //字符常量的值
+    char chr2_val;                  //考虑\的情况
+    int chr_seq;                    //字符常量的序号
 public:
     TreeNode(int lineno, int type); //构造函数         
     void addSibling(TreeNode*);     //添加兄弟结点
@@ -153,7 +165,6 @@ public:
 	void get_temp_var(TreeNode *t);                     //为表达式节点生成临时变量√
     void gen_decl();                                    //全局变量生成代码√
     void gen_str();                                     //字符串变量生成代码
-	void gen_header();                                  //生成汇编语言头部
 	void recursive_gen_code(TreeNode *t);               //递归生成汇编代码√
 	void stmt_gen_code(TreeNode *t);                    //语句生成汇编代码
 	void expr_gen_code(TreeNode *t);                    //表达式生成汇编代码

@@ -2,6 +2,7 @@
 static int nodeid=0;
 extern symbolTable sb;
 extern strTable st;
+extern chrTable ct;
 //插入符号表，检查是否重复定义
 void symbolTable::insert(string id){
     if(search(id)){
@@ -35,12 +36,17 @@ int strTable::insert(string s){
     seq++;
     return seq-1;
 }
-//打印字符串表
-void strTable::display(){
-    cout<<"打印字符串表"<<endl;
-    for(int i=0;i<seq;i++){
-        cout<<str[i]<<endl;
-    }
+//插入字符表
+int chrTable::insert(char c){
+    chr[seq]=c;
+    seq++;
+    return seq-1;
+}
+int chrTable::insert(char c,char c2){
+    chr[seq]=c;
+    chr2[seq]=c2;
+    seq++;
+    return seq-1;
 }
 //构造函数
 TreeNode::TreeNode(int lineno, int type) {
@@ -406,13 +412,11 @@ void Tree::type_check(TreeNode*t){
 //生成标签
 void Tree::get_label(){
     TreeNode* p=root->child[0];
-    //cout<<"get_label: "<<p->nodeID<<endl;
     while(p&&p->nodeType==NODE_STMT&&p->sType==STMT_DECL){p=p->sibling;}
     for(;p;p=p->sibling){
-        //cout<<"recursize_get_label(): " <<p->nodeID<<endl;
+
         recursive_get_label(p);
     }       
-    //cout<<"get label end"<<endl;
 }
 //新建一个标签
 string Tree::new_label(void){
@@ -532,7 +536,6 @@ void Tree::expr_get_label(TreeNode *t)
 //生成汇编代码
 void Tree::gen_code(){  
     cout<<endl<<endl;  
-    gen_header();
     gen_str();
 	gen_decl();
     TreeNode* p=root->child[0];
@@ -542,9 +545,6 @@ void Tree::gen_code(){
     for(;p;p=p->sibling){
         recursive_gen_code(p);
     }
-	// if (root->label.next_label != "")
-	// 	cout << root->label.next_label << ":" << endl;
-	// cout << "\tret" << endl;
 }
 //为表达式节点生成临时变量，每个表达式结点都是一个临时变量
 void Tree::get_temp_var(TreeNode *t)
@@ -568,6 +568,15 @@ void Tree::gen_str(){
     for(int i=0;i<st.seq;i++){
         cout<<"_S"<<i<<":"<<endl;
         cout<<"\t.string "<<st.str[i]<<endl;
+    }   
+    for(int i=0;i<ct.seq;i++){
+        cout<<"__"<<i<<":"<<endl;
+        if(ct.chr2[i]){
+            cout<<"\t.string \""<<ct.chr[i]<<ct.chr2[i]<<"\""<<endl;
+        }
+        else{
+            cout<<"\t.string \""<<ct.chr[i]<<"\""<<endl;
+        }
     }
 }
 //全局变量生成代码
@@ -586,10 +595,6 @@ void Tree::gen_decl(){
         cout << "\t.zero\t4" << endl;
         cout << "\t.align\t4" << endl;
 	}
-}
-//生成汇编语言头部
-void Tree::gen_header(){
-    //cout << "# my asm code header here" << endl;
 }
 //递归生成汇编代码
 void Tree::recursive_gen_code(TreeNode *t){
@@ -612,11 +617,9 @@ void Tree::block_gen_code(TreeNode *t){
 //语句生成汇编代码
 void Tree::stmt_gen_code(TreeNode *t)
 {
-    //cout<<"\t\t\t\t\t\t\t\tstmt_gen_code: "<<t->nodeID<<"  t->sType: "<<t->sType<<endl;
     switch(t->sType){
         case STMT_WHILE:
         {
-            //cout<<"\t\t\t\t\t\t\t\tSTMT_WHILE: "<<t->nodeID<<endl;
             TreeNode* e=t->child[0];
             TreeNode* s=t->child[1];
             cout<<t->label.begin_label<<":"<<endl;
@@ -630,7 +633,6 @@ void Tree::stmt_gen_code(TreeNode *t)
         }
         case STMT_FOR:
         {
-            //cout<<"\t\t\t\t\t\t\t\tSTMT_FOR: "<<t->nodeID<<endl;
             TreeNode* e = t->child[0];
 		    TreeNode* s1 = t->child[1];
 		    TreeNode* s2 = t->child[2];
@@ -648,7 +650,6 @@ void Tree::stmt_gen_code(TreeNode *t)
         }
         case STMT_IFELSE:
         {
-            //cout<<"\t\t\t\t\t\t\t\tSTMT_IFELSE: "<<t->nodeID<<endl;
             TreeNode* s2 = t->child[2];
 		    if (s2 == NULL) {//if (e) s1
 			    TreeNode* e = t->child[0]; TreeNode* s1 = t->child[1];
@@ -684,8 +685,13 @@ void Tree::stmt_gen_code(TreeNode *t)
 		    if (e2->nodeType == NODE_VAR)
 			    cout << "_"<<e2->varName<<", %eax"<<endl;
                 
-		    else if (e2->nodeType == NODE_CONST)
-			    cout << "$" <<e2->int_val<<", %eax"<<endl;
+		    else if (e2->nodeType == NODE_CONST){
+                if(e2->valType==VALUE_INT)
+                    cout << "$" <<e2->int_val<<", %eax"<<endl;
+                if(e2->valType==VALUE_CHAR)
+                    cout << "__" <<e2->chr_seq<<", %eax"<<endl;
+            }
+			    
             else if(e2->nodeType==NODE_STMT){
                 cout<<"_"<<e2->child[0]->varName<<", %eax"<<endl;
             }
@@ -782,7 +788,6 @@ void Tree::stmt_gen_code(TreeNode *t)
         }
         case STMT_DECL:
         {
-            //cout<<"\t\t\t\t\t\t\t\tSTMT_DECL"<<endl;
             TreeNode* e = t->child[1];
             recursive_gen_code(e);
             break;
