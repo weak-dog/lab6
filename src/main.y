@@ -18,7 +18,8 @@
 %token TRUE FALSE
 
 %right ASSIGN ADDASSIGN SUBASSIGN MULASSIGN DIVASSIGN //=
-%left AND OR
+%left OR
+%left AND
 %left LT GT LE GE EQ NEQ //< > <= >= == !=
 %left ADD SUB //+-
 %left MUL DIV MOD //* /
@@ -95,25 +96,25 @@ assign_stmt:
 }
 | IDENTIFIER ADDASSIGN expr {
     $$=new TreeNode($1->lineno,NODE_STMT);
-    $$->sType=STMT_ASSIGN;
+    $$->sType=STMT_ADD_ASSIGN;
     $$->child[0]=$1;
     $$->child[1]=$3;
 }
 | IDENTIFIER SUBASSIGN expr {
     $$=new TreeNode($1->lineno,NODE_STMT);
-    $$->sType=STMT_ASSIGN;
+    $$->sType=STMT_SUB_ASSIGN;
     $$->child[0]=$1;
     $$->child[1]=$3;
 }
 | IDENTIFIER MULASSIGN expr {
     $$=new TreeNode($1->lineno,NODE_STMT);
-    $$->sType=STMT_ASSIGN;
+    $$->sType=STMT_MUL_ASSIGN;
     $$->child[0]=$1;
     $$->child[1]=$3;
 }
 | IDENTIFIER DIVASSIGN expr {
     $$=new TreeNode($1->lineno,NODE_STMT);
-    $$->sType=STMT_ASSIGN;
+    $$->sType=STMT_DIV_ASSIGN;
     $$->child[0]=$1;
     $$->child[1]=$3;
 }
@@ -132,6 +133,13 @@ if_stmt:
     $$->sType=STMT_IFELSE;
     $$->child[0]=$3;
     $$->child[1]=$5;
+}
+| IF LP expr RP block ELSE if_stmt {
+    $$=new TreeNode($3->lineno,NODE_STMT);
+    $$->sType=STMT_IFELSE;
+    $$->child[0]=$3;
+    $$->child[1]=$5;
+    $$->child[2]=$7;
 }
 ;
 

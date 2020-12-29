@@ -1,16 +1,20 @@
-int main(){
-    int a=1+2;
-    if(2>1)
-    {
-        int d=a+c;
-    }else{
-        a=d+c;
-    }
-    while(a>b){
-        m=n+d;
-    }
-    for(int i=0;i<4&&i>5;i++){
-        m=n+d;
-    }
-    c=a+v;
+int main() {
+    // int a;
+    // int b;
+    // int c;
+    // int d;
+    // int result;
+    // a = 5;
+    // b = 5;
+    // c = 1;
+    // d = -2;
+    // result = 2;
+    // if ((d * 1 / 2) < 0 || (a - b) != 0 && (c + 3) % 2 != 0) {
+    //     printf("%d\n",result);
+    // }
+    // if ((d % 2 + 67) < 0 || (a - b) != 0 && (c + 2) % 2 != 0) {
+    //     result = 4;
+    //     printf("%d\n",result);
+    // }
+    // return 0;
 }

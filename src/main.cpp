@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     if(tree.root != NULL) {
         //sb.display();
         tree.root->genNodeId();
-        tree.root->printAST();
+        //tree.root->printAST();
         //tree.type_check(root);
         tree.get_temp_var(root);
         tree.get_label();

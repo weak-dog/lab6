@@ -117,6 +117,7 @@ public:
     int bool_val;                   //bool型常量的值
     string str_val;                 //字符串常量的值
     int str_seq;                    //字符串常量对应的变量的序号
+    char chr_val;                   //字符常量的值
 public:
     TreeNode(int lineno, int type); //构造函数         
     void addSibling(TreeNode*);     //添加兄弟结点

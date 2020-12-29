@@ -1,0 +1,177 @@
+lno@1       @0           block     children: [@1 ]
+lno@2       @1       statement          stmt: declation     children: [@2 @3 ]      sibling: [@4 @7 @10 @13 @16 @19 @22 @25 @29 @32 @58 ]
+lno@2       @2            type          type: int
+lno@2       @3        variable      var_name: a
+lno@3       @4       statement          stmt: declation     children: [@5 @6 ]      sibling: [@7 @10 @13 @16 @19 @22 @25 @29 @32 @58 ]
+lno@3       @5            type          type: int
+lno@3       @6        variable      var_name: b
+lno@4       @7       statement          stmt: declation     children: [@8 @9 ]      sibling: [@10 @13 @16 @19 @22 @25 @29 @32 @58 ]
+lno@4       @8            type          type: int
+lno@4       @9        variable      var_name: c
+lno@5       @10       statement          stmt: declation     children: [@11 @12 ]      sibling: [@13 @16 @19 @22 @25 @29 @32 @58 ]
+lno@5       @11            type          type: int
+lno@5       @12        variable      var_name: d
+lno@6       @13       statement          stmt: declation     children: [@14 @15 ]      sibling: [@16 @19 @22 @25 @29 @32 @58 ]
+lno@6       @14            type          type: int
+lno@6       @15        variable      var_name: result
+lno@7       @16       statement          stmt: assign     children: [@17 @18 ]      sibling: [@19 @22 @25 @29 @32 @58 ]
+lno@7       @17        variable      var_name: a
+lno@7       @18           const          type: int         value: 5
+lno@8       @19       statement          stmt: assign     children: [@20 @21 ]      sibling: [@22 @25 @29 @32 @58 ]
+lno@8       @20        variable      var_name: b
+lno@8       @21           const          type: int         value: 5
+lno@9       @22       statement          stmt: assign     children: [@23 @24 ]      sibling: [@25 @29 @32 @58 ]
+lno@9       @23        variable      var_name: c
+lno@9       @24           const          type: int         value: 1
+lno@10       @25       statement          stmt: assign     children: [@26 @27 ]      sibling: [@29 @32 @58 ]
+lno@10       @26        variable      var_name: d
+lno@10       @27      expression      operator: -     valuetype: int     children: [@28 ]
+lno@10       @28           const          type: int         value: 2
+lno@11       @29       statement          stmt: assign     children: [@30 @31 ]      sibling: [@32 @58 ]
+lno@11       @30        variable      var_name: result
+lno@11       @31           const          type: int         value: 2
+lno@12       @32       statement          stmt: ifelse     children: [@33 @54 ]      sibling: [@58 ]
+lno@12       @33      expression      operator: ||     valuetype: bool     children: [@34 @41 ]
+lno@12       @34      expression      operator: <     valuetype: bool     children: [@35 @40 ]
+lno@12       @35      expression      operator: /     valuetype: int     children: [@36 @39 ]
+lno@12       @36      expression      operator: *     valuetype: int     children: [@37 @38 ]
+lno@12       @37        variable      var_name: d
+lno@12       @38           const          type: int         value: 1
+lno@12       @39           const          type: int         value: 2
+lno@12       @40           const          type: int         value: 0
+lno@12       @41      expression      operator: &&     valuetype: bool     children: [@42 @47 ]
+lno@12       @42      expression      operator: !=     valuetype: bool     children: [@43 @46 ]
+lno@12       @43      expression      operator: -     valuetype: int     children: [@44 @45 ]
+lno@12       @44        variable      var_name: a
+lno@12       @45        variable      var_name: b
+lno@12       @46           const          type: int         value: 0
+lno@12       @47      expression      operator: !=     valuetype: bool     children: [@48 @53 ]
+lno@12       @48      expression      operator: %     valuetype: int     children: [@49 @52 ]
+lno@12       @49      expression      operator: +     valuetype: int     children: [@50 @51 ]
+lno@12       @50        variable      var_name: c
+lno@12       @51           const          type: int         value: 3
+lno@12       @52           const          type: int         value: 2
+lno@12       @53           const          type: int         value: 0
+lno@13       @54           block     children: [@55 ]
+lno@13       @55       statement          stmt: printf     children: [@56 @57 ]
+lno@13       @56           const          type: string         value: "%d\n"
+lno@13       @57        variable      var_name: result
+lno@23       @58       statement          stmt: return     children: [@59 ]
+lno@23       @59           const          type: int         value: 0
+
+
+
+# define strings here
+.section   .data
+_S0:
+	.string "%d\n"
+
+# define variables and temp variables here
+.section .bss
+_a:
+	.zero	4
+	.align	4
+_b:
+	.zero	4
+	.align	4
+_c:
+	.zero	4
+	.align	4
+_d:
+	.zero	4
+	.align	4
+_result:
+	.zero	4
+	.align	4
+t0:
+	.zero	4
+	.align	4
+t1:
+	.zero	4
+	.align	4
+t2:
+	.zero	4
+	.align	4
+t3:
+	.zero	4
+	.align	4
+t4:
+	.zero	4
+	.align	4
+t5:
+	.zero	4
+	.align	4
+t6:
+	.zero	4
+	.align	4
+t7:
+	.zero	4
+	.align	4
+t8:
+	.zero	4
+	.align	4
+t9:
+	.zero	4
+	.align	4
+t10:
+	.zero	4
+	.align	4
+.section .text
+	.globl main
+main:
+	movl $5, %eax
+	movl %eax, _a
+	movl $5, %eax
+	movl %eax, _b
+	movl $1, %eax
+	movl %eax, _c
+	movl $2, %eax
+	negl %eax
+	movl %eax, t0
+	movl t0, %eax
+	movl %eax, _d
+	movl $2, %eax
+	movl %eax, _result
+	movl _d, %eax
+	imull $1, %eax
+	movl %eax, t4
+	movl t4, %eax
+	movl %edx, %eax
+	sarl $31, %edx
+movl $2, %ebx
+	idivl %ebx
+	movl %eax, t3
+	movl t3, %eax
+	cmpl $0, %eax
+	jl _0
+	jmp _2
+_2:
+	movl _a, %eax
+	subl _b, %eax
+	movl %eax, t7
+	movl t7, %eax
+	subl $0, %eax
+	jnz _3
+	jmp _1
+_3:
+	movl _c, %eax
+	addl $3, %eax
+	movl %eax, t10
+	movl t10, %eax
+	movl %edx, %eax
+	sarl $31, %edx
+movl $2, %ebx
+	idivl %ebx
+	movl %edx, t9
+	movl t9, %eax
+	subl $0, %eax
+	jnz _0
+	jmp _1
+_0:
+	pushl _result
+	pushl $_S0
+	call printf
+	addl $8,%esp
+_1:
+	pushl $0
+	call exit

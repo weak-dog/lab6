@@ -29,3 +29,6 @@ clean:
 
 test: 
 	./bin/main tests/test.c > result.s
+fuck:
+	gcc -m32 -o result result.s
+	./result
