@@ -33,7 +33,6 @@ statements:
 | statements statement {$$=$1;$$->addSibling($2);}
 | statement {$$=$1;}
 ;
-
 statement:
   block {$$=$1;}
 | decl_stmt {$$=$1;}
@@ -88,7 +87,13 @@ decl_assign_stmt:
 };
 
 assign_stmt:
-  IDENTIFIER ASSIGN expr {
+IDENTIFIER ASSIGN assign_stmt {
+    $$=new TreeNode($1->lineno,NODE_STMT);
+    $$->sType=STMT_ASSIGN;
+    $$->child[0]=$1;
+    $$->child[1]=$3;
+}
+| IDENTIFIER ASSIGN expr {
     $$=new TreeNode($1->lineno,NODE_STMT);
     $$->sType=STMT_ASSIGN;
     $$->child[0]=$1;

@@ -1,7 +1,8 @@
 int main(){
-    for(int a=0;a<200;a=a+1){
-        printf("In Loop\n");
-    }
-    printf("End Loop\n");
+    int a;
+    int b;
+    a=b=3;
+    printf("%d",a);
+    printf("%d",b);
     return 0;
 }

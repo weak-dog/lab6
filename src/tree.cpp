@@ -675,17 +675,20 @@ void Tree::stmt_gen_code(TreeNode *t)
         }
         case STMT_ASSIGN:
         {
-            //cout<<"\t\t\t\t\t\t\t\tSTMT_ASSIGN: "<<t->nodeID<<endl;
             TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
             if(e2->nodeType==NODE_EXPR)
 		        expr_gen_code(e2);
+            else
+                stmt_gen_code(e2);
             cout << "\tmovl ";
 		    if (e2->nodeType == NODE_VAR)
 			    cout << "_"<<e2->varName<<", %eax"<<endl;
+                
 		    else if (e2->nodeType == NODE_CONST)
 			    cout << "$" <<e2->int_val<<", %eax"<<endl;
-		    // else if (e2->kind == CK)
-			//     cout << 80;
+            else if(e2->nodeType==NODE_STMT){
+                cout<<"_"<<e2->child[0]->varName<<", %eax"<<endl;
+            }
 		    else {
                 cout << "t" << e2->temp_var<<", %eax"<<endl;
             }

@@ -1,47 +1,33 @@
 
-
-
 # define strings here
 .section   .data
 _S0:
-	.string "In Loop\n"
+	.string "%d"
 _S1:
-	.string "End Loop\n"
+	.string "%d"
 
 # define variables and temp variables here
 .section .bss
 _a:
 	.zero	4
 	.align	4
-t0:
-	.zero	4
-	.align	4
-t1:
+_b:
 	.zero	4
 	.align	4
 .section .text
 	.globl main
 main:
-	movl $0, %eax
+	movl $3, %eax
+	movl %eax, _b
+	movl _b, %eax
 	movl %eax, _a
-_0:
-	movl _a, %eax
-	cmpl $200, %eax
-	jl _1
-	jmp _2
-_1:
+	pushl _a
 	pushl $_S0
 	call printf
-	addl $4,%esp
-	movl _a, %eax
-	addl $1, %eax
-	movl %eax, t1
-	movl t1, %eax
-	movl %eax, _a
-	jmp _0
-_2:
+	addl $8,%esp
+	pushl _b
 	pushl $_S1
 	call printf
-	addl $4,%esp
+	addl $8,%esp
 	pushl $0
 	call exit
