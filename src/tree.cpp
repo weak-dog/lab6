@@ -1,6 +1,7 @@
 #include "tree.h"
 static int nodeid=0;
 extern symbolTable sb;
+extern strTable st;
 //插入符号表，检查是否重复定义
 void symbolTable::insert(string id){
     if(search(id)){
@@ -27,6 +28,19 @@ void symbolTable::display(){
         cout<<name[i]<<" ";
     }
     cout<<endl;
+}
+//插入字符串表
+int strTable::insert(string s){
+    str[seq]=s;
+    seq++;
+    return seq-1;
+}
+//打印字符串表
+void strTable::display(){
+    cout<<"打印字符串表"<<endl;
+    for(int i=0;i<seq;i++){
+        cout<<str[i]<<endl;
+    }
 }
 //构造函数
 TreeNode::TreeNode(int lineno, int type) {
@@ -165,7 +179,17 @@ string TreeNode::sType2String(int type) {
         case STMT_DECL: 
             return "declation";        
         case STMT_ASSIGN: 
-            return "assign";        
+            return "assign";   
+        case STMT_ADD_ASSIGN:
+            return "add_assign";     
+        case STMT_SUB_ASSIGN:
+            return "sub_assign";    
+        case STMT_MUL_ASSIGN:
+            return "mul_assign";    
+        case STMT_DIV_ASSIGN:
+            return "div_assign";    
+        case STMT_MOD_ASSIGN:
+            return "mod_assign";    
         case STMT_RETURN: 
             return "return";       
         case STMT_IFELSE: 
@@ -263,6 +287,26 @@ void Tree::type_check(TreeNode*t){
                     case STMT_WHILE:
                         if(t->child[0]->valType!=VALUE_BOOL)
                             cout<<"Bad boolean type at line: "<<t->lineno<<endl;    
+                        break;
+                    case STMT_ADD_ASSIGN:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
+                        break;
+                    case STMT_SUB_ASSIGN:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
+                        break;
+                    case STMT_MUL_ASSIGN:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
+                        break;
+                    case STMT_DIV_ASSIGN:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
+                        break;
+                    case STMT_MOD_ASSIGN:
+                        if(t->child[0]->valType!=t->child[1]->valType)
+                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
                         break;
                     case STMT_ASSIGN:
                         if(t->child[0]->valType!=t->child[1]->valType)
@@ -373,34 +417,41 @@ void Tree::get_label(){
 //新建一个标签
 string Tree::new_label(void){
     char tmp[20];
-    sprintf(tmp,"@%d",Tree::label_seq);
+    sprintf(tmp,"_%d",Tree::label_seq);
     Tree::label_seq++;
-    //cout<<"label_seq: "<<label_seq-1<<endl;
     return tmp;
 }
 //递归获取标签
 void Tree::recursive_get_label(TreeNode *t){
-    int i;
     if(t){
+        //cout<<"recursize_get_label: "<<t->nodeID<<endl;
         if(t->nodeType==NODE_STMT)
             stmt_get_label(t);
-        else if(t->nodeType==NODE_EXPR){
-            //cout<<"expr_get_label(t)"<<endl;
+        if(t->nodeType==NODE_EXPR){
             expr_get_label(t);
         }
-            
+        if(t->nodeType==NODE_COMP){
+            block_get_label(t);
+        }
         for(int i=0;i<4;i++)
             recursive_get_label(t->child[i]);
     }
 }
+//代码块生成标签
+void Tree::block_get_label(TreeNode *t){
+	for (TreeNode* p = t->child[0];p;p = p->sibling) {
+		//if (p->sibling == NULL)
+            //p->label.next_label = t->label.next_label;
+        recursive_get_label(p);
+	}
+}
 //语句生成标签
 void Tree::stmt_get_label(TreeNode *t){
-    //cout<<"stmt_get_label"<<endl;
+    //cout<<"stmt_get_label: "<<t->nodeID<<endl;
     TreeNode* e = t->child[0];
 	TreeNode* s1 = t->child[1];
 	TreeNode* s2 = t->child[2];
 	TreeNode* s3 = t->child[3];
-	int i;
 	switch (t->sType) {
 	case STMT_IFELSE:
 		if (s2 == NULL) {//if(e) s1
@@ -437,15 +488,7 @@ void Tree::stmt_get_label(TreeNode *t){
 		s1->label.false_label = t->label.next_label;
 		s1->label.next_label = t->label.begin_label;
 		break;
-	case STMT_BLOCK: // 复合语句，递归
-		TreeNode* p = t->child[0];
-		for (; p; p = p->sibling) {
-			if (p->sibling == NULL)
-				p->label.next_label = t->label.next_label;
-			recursive_get_label(p);
-		}
-		break;
-	}
+    }
 }
 //表达式生成标签
 void Tree::expr_get_label(TreeNode *t)
@@ -486,14 +529,16 @@ void Tree::expr_get_label(TreeNode *t)
 		break;
 	}
 }
-//TODO生成汇编代码
-void Tree::gen_code(){    
+//生成汇编代码
+void Tree::gen_code(){  
+    cout<<endl<<endl;  
     gen_header();
+    gen_str();
 	gen_decl();
     TreeNode* p=root->child[0];
-    cout << endl << "# your asm code here" << endl;
-	cout << "\t.text" << endl;
-    cout << "\t.globl _start" << endl;
+	cout << ".section .text" << endl;
+    cout << "\t.globl main" << endl;
+    cout<<"main:"<<endl;
     for(;p;p=p->sibling){
         recursive_gen_code(p);
     }
@@ -516,10 +561,19 @@ void Tree::get_temp_var(TreeNode *t)
         Tree::get_temp_var(t->sibling);
     }
 }
+//在data中定义字符串
+void Tree::gen_str(){
+    cout << endl << "# define strings here" << endl;
+    cout<<".section   .data"<<endl;
+    for(int i=0;i<st.seq;i++){
+        cout<<"_S"<<i<<":"<<endl;
+        cout<<"\t.string "<<st.str[i]<<endl;
+    }
+}
 //全局变量生成代码
 void Tree::gen_decl(){
     cout << endl << "# define variables and temp variables here" << endl;
-	cout << "\t.bss" << endl;
+	cout << ".section .bss" << endl;
     //符号表中的全局变量
     for(int i=0;i<sb.size;i++){
         cout<<"_"<<sb.name[i]<<":"<<endl;
@@ -535,7 +589,7 @@ void Tree::gen_decl(){
 }
 //生成汇编语言头部
 void Tree::gen_header(){
-    cout << "# my asm code header here" << endl;
+    //cout << "# my asm code header here" << endl;
 }
 //递归生成汇编代码
 void Tree::recursive_gen_code(TreeNode *t){
@@ -562,23 +616,21 @@ void Tree::stmt_gen_code(TreeNode *t)
     switch(t->sType){
         case STMT_WHILE:
         {
-            cout<<"\t\t\t\t\t\t\t\tSTMT_WHILE: "<<t->nodeID<<endl;
+            //cout<<"\t\t\t\t\t\t\t\tSTMT_WHILE: "<<t->nodeID<<endl;
             TreeNode* e=t->child[0];
             TreeNode* s=t->child[1];
             cout<<t->label.begin_label<<":"<<endl;
             recursive_gen_code(e);
             cout<<e->label.true_label<<":"<<endl;
-            //cout<<"where is endl0"<<endl;
             recursive_gen_code(s);
-            //cout<<"where is endl2"<<endl;
-            cout<<"\tjmp"<<t->label.begin_label<<endl;
+            cout<<"\tjmp "<<t->label.begin_label<<endl;
             if(t->label.next_label!="")
                 cout<<t->label.next_label<<":"<<endl;
             return;
         }
         case STMT_FOR:
         {
-            cout<<"\t\t\t\t\t\t\t\tSTMT_FOR: "<<t->nodeID<<endl;
+            //cout<<"\t\t\t\t\t\t\t\tSTMT_FOR: "<<t->nodeID<<endl;
             TreeNode* e = t->child[0];
 		    TreeNode* s1 = t->child[1];
 		    TreeNode* s2 = t->child[2];
@@ -591,12 +643,12 @@ void Tree::stmt_gen_code(TreeNode *t)
 		    recursive_gen_code(s2);				//每次循环后的变化
 		    cout << "\tjmp " << t->label.begin_label << endl;
 		    if (t->label.next_label != "")
-			    cout << t->label.next_label << ":" << endl;
+			    cout <<t->label.next_label << ":" << endl;
 		    return;
         }
         case STMT_IFELSE:
         {
-            cout<<"\t\t\t\t\t\t\t\tSTMT_IFELSE: "<<t->nodeID<<endl;
+            //cout<<"\t\t\t\t\t\t\t\tSTMT_IFELSE: "<<t->nodeID<<endl;
             TreeNode* s2 = t->child[2];
 		    if (s2 == NULL) {//if (e) s1
 			    TreeNode* e = t->child[0]; TreeNode* s1 = t->child[1];
@@ -613,7 +665,7 @@ void Tree::stmt_gen_code(TreeNode *t)
 			    for (; s1; s1 = s1->sibling) 
 				    recursive_gen_code(s1);
 			    cout << "\tjmp " << t->label.next_label << endl;
-			    cout << e->label.false_label << ":" << endl;
+			    cout <<e->label.false_label << ":" << endl;
 			    for (; s2; s2 = s2->sibling)
 				    recursive_gen_code(s2);
 		    }
@@ -621,9 +673,9 @@ void Tree::stmt_gen_code(TreeNode *t)
 			    cout << t->label.next_label << ":" << endl;
 		    return;
         }
-        case STMT_ASSIGN://TODO声明语句中的赋值怎么搞
+        case STMT_ASSIGN:
         {
-            cout<<"\t\t\t\t\t\t\t\tSTMT_ASSIGN: "<<t->nodeID<<endl;
+            //cout<<"\t\t\t\t\t\t\t\tSTMT_ASSIGN: "<<t->nodeID<<endl;
             TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
             if(e2->nodeType==NODE_EXPR)
 		        expr_gen_code(e2);
@@ -631,29 +683,155 @@ void Tree::stmt_gen_code(TreeNode *t)
 		    if (e2->nodeType == NODE_VAR)
 			    cout << "_"<<e2->varName<<", %eax"<<endl;
 		    else if (e2->nodeType == NODE_CONST)
-			    cout << "%" <<e2->int_val<<", %eax"<<endl;
+			    cout << "$" <<e2->int_val<<", %eax"<<endl;
 		    // else if (e2->kind == CK)
 			//     cout << 80;
 		    else {
                 cout << "t" << e2->temp_var<<", %eax"<<endl;
             }
 		    cout << "\tmovl %eax, _" << e1->varName << endl;
-            //cout<<"where is endl1"<<endl;
 		    return;
+        }
+        case STMT_ADD_ASSIGN:
+        {
+            TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
+            if(e2->nodeType==NODE_EXPR)
+		        expr_gen_code(e2);
+            cout << "\tmovl ";
+		    if (e2->nodeType == NODE_VAR)
+			    cout << "_"<<e2->varName<<", %eax"<<endl;
+		    else if (e2->nodeType == NODE_CONST)
+			    cout << "$" <<e2->int_val<<", %eax"<<endl;
+		    else {
+                cout << "t" << e2->temp_var<<", %eax"<<endl;
+            }
+            cout<<"\taddl _"<<e1->varName<<", %eax"<<endl;
+		    cout << "\tmovl %eax, _" << e1->varName << endl;
+		    return;
+        }
+        case STMT_SUB_ASSIGN:
+        {
+            TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
+            if(e2->nodeType==NODE_EXPR)
+		        expr_gen_code(e2);
+            cout << "\tmovl ";
+		    if (e2->nodeType == NODE_VAR)
+			    cout << "_"<<e2->varName<<", %eax"<<endl;
+		    else if (e2->nodeType == NODE_CONST)
+			    cout << "$" <<e2->int_val<<", %eax"<<endl;
+		    else {
+                cout << "t" << e2->temp_var<<", %eax"<<endl;
+            }
+            cout<<"\tsubl _"<<e1->varName<<", %eax"<<endl;
+		    cout << "\tmovl %eax, _" << e1->varName << endl;
+		    return;
+        }
+        case STMT_MUL_ASSIGN:
+        {
+            TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
+            if(e2->nodeType==NODE_EXPR)
+		        expr_gen_code(e2);
+            cout << "\tmovl ";
+		    if (e2->nodeType == NODE_VAR)
+			    cout << "_"<<e2->varName<<", %eax"<<endl;
+		    else if (e2->nodeType == NODE_CONST)
+			    cout << "$" <<e2->int_val<<", %eax"<<endl;
+		    else {
+                cout << "t" << e2->temp_var<<", %eax"<<endl;
+            }
+            cout<<"\timull _"<<e1->varName<<", %eax"<<endl;
+		    cout << "\tmovl %eax, _" << e1->varName << endl;
+		    return;
+        }
+        case STMT_DIV_ASSIGN:
+        {
+            TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
+            cout<<"\txorl %edx,%edx"<<endl;
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %eax"<<endl;
+            if(e2->nodeType==NODE_VAR)
+                cout<<"\tidivl _"<<e2->varName<<endl;
+            else if(e2->nodeType==NODE_CONST){
+                cout<<"\tmovl $"<<e2->int_val<<", %ebx"<<endl;
+                cout<<"\tidivl %ebx"<<endl;
+            }             
+            else cout<<"\tidivl t"<<e2->temp_var<<endl;
+
+            cout<<"\tmovl %eax, _"<<e1->varName<<endl;
+		    return;
+        }
+        case STMT_MOD_ASSIGN:
+        {
+            TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
+            cout<<"\txorl %edx,%edx"<<endl;
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %eax"<<endl;
+            if(e2->nodeType==NODE_VAR)
+                cout<<"\tidivl _"<<e2->varName<<endl;
+            else if(e2->nodeType==NODE_CONST){
+                cout<<"\tmovl $"<<e2->int_val<<", %ebx"<<endl;
+                cout<<"\tidivl %ebx"<<endl;
+            }             
+            else cout<<"\tidivl t"<<e2->temp_var<<endl;
+
+            cout<<"\tmovl %edx, _"<<e1->varName<<endl;
         }
         case STMT_DECL:
         {
-            cout<<"\t\t\t\t\t\t\t\tSTMT_DECL"<<endl;
+            //cout<<"\t\t\t\t\t\t\t\tSTMT_DECL"<<endl;
             TreeNode* e = t->child[1];
             recursive_gen_code(e);
             break;
         }
         case STMT_PRINTF:
+        {
+            TreeNode* e1=t->child[0];
+            TreeNode* e2=t->child[1];
+            if(e2){//两个参数
+                //第二个参数
+                if(e2->nodeType==NODE_EXPR){
+                    expr_gen_code(e2);
+                    cout<<"\tpushl t"<<e2->temp_var<<endl;
+                }   
+		        if (e2->nodeType == NODE_VAR)
+			        cout << "\tpushl _"<<e2->varName<<endl;
+		        if (e2->nodeType == NODE_CONST)
+			        cout << "\tpushl $" <<e2->int_val<<endl;
+                //第一个参数
+                cout<<"\tpushl $_S"<<e1->str_seq<<endl;
+                cout<<"\tcall printf"<<endl;
+                cout<<"\taddl $8,%esp"<<endl;
+            }else{//只有一个参数
+                cout<<"\tpushl $_S"<<e1->str_seq<<endl;
+                cout<<"\tcall printf"<<endl;
+                cout<<"\taddl $4,%esp"<<endl;
+            }
             break;
+        }
         case STMT_SCANF://TODO
+        {
+            TreeNode* e1=t->child[0];
+            TreeNode* e2=t->child[1];
+			cout << "\tpushl $_"<<e2->varName<<endl;
+            cout<<"\tpushl $_S"<<e1->str_seq<<endl;
+            cout<<"\tcall scanf"<<endl;
+            cout<<"\taddl $8,%esp"<<endl;
             break;
+        }
         case STMT_RETURN://TODO
+        {
+            TreeNode* e=t->child[0];
+            if(e->nodeType==NODE_EXPR)
+		        cout<<"\tpushl t"<<e->temp_var<<endl;
+		    if (e->nodeType == NODE_VAR)
+			    cout << "\tpushl _"<<e->varName<<endl;
+		    if (e->nodeType == NODE_CONST)
+			    cout << "\tpushl $" <<e->int_val<<endl;
+            cout<<"\tcall exit"<<endl;
             break;
+        }
     }
 }
 //表达式生成汇编代码
@@ -673,13 +851,13 @@ void Tree::expr_gen_code(TreeNode *t){
         if(e1->nodeType==NODE_VAR)
             cout<<"_"<<e1->varName<<", %eax"<<endl;
         else if(e1->nodeType==NODE_CONST)
-            cout<<"%"<<e1->int_val<<", %eax"<<endl;
+            cout<<"$"<<e1->int_val<<", %eax"<<endl;
         else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
         cout<<"\taddl ";
         if(e2->nodeType==NODE_VAR)
             cout<<"_"<<e2->varName<<", %eax"<<endl;
         else if(e2->nodeType==NODE_CONST)
-            cout<<"%"<<e2->int_val<<", %eax"<<endl;
+            cout<<"$"<<e2->int_val<<", %eax"<<endl;
         else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
         cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
 		break;
@@ -691,62 +869,67 @@ void Tree::expr_gen_code(TreeNode *t){
         if(e1->nodeType==NODE_VAR)
             cout<<"_"<<e1->varName<<", %eax"<<endl;
         else if(e1->nodeType==NODE_CONST)
-            cout<<"%"<<e1->int_val<<", %eax"<<endl;
+            cout<<"$"<<e1->int_val<<", %eax"<<endl;
         else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
         cout<<"\tsubl ";
         if(e2->nodeType==NODE_VAR)
             cout<<"_"<<e2->varName<<", %eax"<<endl;
         else if(e2->nodeType==NODE_CONST)
-            cout<<"%"<<e2->int_val<<", %eax"<<endl;
+            cout<<"$"<<e2->int_val<<", %eax"<<endl;
         else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
         cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
 		break;
 	}
-	case OP_MUL:
+	case OP_MUL:{
         //cout<<"\t\t\t\t\t\t\t\tOP_MUL: "<<t->nodeID<<endl;
 		cout<<"\tmovl ";
         if(e1->nodeType==NODE_VAR)
             cout<<"_"<<e1->varName<<", %eax"<<endl;
         else if(e1->nodeType==NODE_CONST)
-            cout<<"%"<<e1->int_val<<", %eax"<<endl;
+            cout<<"$"<<e1->int_val<<", %eax"<<endl;
         else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
         cout<<"\timull ";
         if(e2->nodeType==NODE_VAR)
             cout<<"_"<<e2->varName<<", %eax"<<endl;
         else if(e2->nodeType==NODE_CONST)
-            cout<<"%"<<e2->int_val<<", %eax"<<endl;
+            cout<<"$"<<e2->int_val<<", %eax"<<endl;
         else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
         cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
 		break;
+    }    
     case OP_DIV:
-        // movl $8, %eax   #被除数是%edx:%eax 是这两个寄存器拼起来的%eax存放低位%edx存储高位
-        // movl %eax, %edx
-        // shrl $31, %edx  #根据符号位填充%edx寄存器
-        // movl $2, %ecx
-        // idivl %ecx      #%eax保存商 %edx保存余数
-        // cout<<"\tmovl ";
-        // if(e1->nodeType==NODE_VAR)
-        //     cout<<e1->varName<<", %eax"<<endl;
-        // else if(e1->nodeType==NODE_CONST)
-        //     cout<<"%"<<e1->int_val<<", %eax"<<endl;
-        // else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
-        // cout<<"\tmovl ";
-        // if(e2->nodeType==NODE_VAR)
-        //     cout<<e2->varName<<", %edx"<<endl;
-        // else if(e2->nodeType==NODE_CONST)
-        //     cout<<"%"<<e2->int_val<<", %edx"<<endl;
-        // else cout<<"t"<<e2->temp_var<<", %edx"<<endl;
-        // cout<<"\tmovl %eax, edx"<<endl;
-        // cout<<"\timull ";
-        // if(e2->nodeType==NODE_VAR)
-        //     cout<<e2->varName<<", eax"<<endl;
-        // else if(e2->nodeType==NODE_CONST)
-        //     cout<<"%"<<e2->int_val<<", %eax"<<endl;
-        // else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
-        // cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
-		// break;
+        cout<<"\txorl %edx,%edx"<<endl;
+        cout<<"\tmovl ";
+        if(e1->nodeType==NODE_VAR)
+            cout<<"_"<<e1->varName<<", %eax"<<endl;
+        else if(e1->nodeType==NODE_CONST)
+            cout<<"$"<<e1->int_val<<", %eax"<<endl;
+        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+        if(e2->nodeType==NODE_VAR)
+            cout<<"\tidivl _"<<e2->varName<<endl;
+        else if(e2->nodeType==NODE_CONST){
+            cout<<"\tmovl $"<<e2->int_val<<", %ebx"<<endl;
+            cout<<"\tidivl %ebx"<<endl;
+        }             
+        else cout<<"\tidivl t"<<e2->temp_var<<endl;
+        cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
         break;
     case OP_MOD:
+        cout<<"\txorl %edx,%edx"<<endl;
+        cout<<"\tmovl ";
+        if(e1->nodeType==NODE_VAR)
+            cout<<"_"<<e1->varName<<", %eax"<<endl;
+        else if(e1->nodeType==NODE_CONST)
+            cout<<"$"<<e1->int_val<<", %eax"<<endl;
+        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+        if(e2->nodeType==NODE_VAR)
+            cout<<"\tidivl _"<<e2->varName<<endl;
+        else if(e2->nodeType==NODE_CONST){
+            cout<<"\tmovl $"<<e2->int_val<<", %ebx"<<endl;
+            cout<<"\tidivl %ebx"<<endl;
+        }
+        else cout<<"\tidivl t"<<e2->temp_var<<endl;
+        cout<<"\tmovl %edx, t"<<t->temp_var<<endl;
         break;
     case OP_INC:
         //cout<<"\t\t\t\t\t\t\t\tOP_INC: "<<t->nodeID<<endl;
@@ -762,7 +945,7 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout<<"\tnegl %eax"<<endl;
         cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
@@ -770,13 +953,13 @@ void Tree::expr_gen_code(TreeNode *t){
     case OP_AND:
         //cout<<"\t\t\t\t\t\t\t\tOP_AND: "<<t->nodeID<<endl;
         recursive_gen_code(e1);
-        cout<<e1->label.true_label<<":"<<endl;
+        if(e1->label.true_label!="")cout<<e1->label.true_label<<":"<<endl;
         recursive_gen_code(e2);
         break;
     case OP_OR:
         //cout<<"\t\t\t\t\t\t\t\tOP_OR: "<<t->nodeID<<endl;
         recursive_gen_code(e1);
-        cout<<e1->label.false_label<<":"<<endl;
+        if(e1->label.false_label!="")cout<<e1->label.false_label<<":"<<endl;
         recursive_gen_code(e2);
         break;
     case OP_NOT:
@@ -789,16 +972,18 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout << "\tcmpl ";
 		if (e2->nodeType == NODE_VAR)
 			cout << "_"<<e2->varName<<", %eax"<<endl;
 		else if (e2->nodeType == NODE_CONST)
-			cout << "%"<<e2->int_val<<", %eax"<<endl;
+			cout << "$"<<e2->int_val<<", %eax"<<endl;
 		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        cout << "\tjl " << t->label.true_label << endl;
-		cout << "\tjmp " << t->label.false_label << endl;
+        if(t->label.true_label!="")
+            cout << "\tjl " << t->label.true_label << endl;
+        if(t->label.false_label!="")
+		    cout << "\tjmp " << t->label.false_label << endl;
 		break;
     case OP_LE:
         //cout<<"\t\t\t\t\t\t\t\tOP_LE: "<<t->nodeID<<endl;
@@ -806,15 +991,17 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout << "\tcmpl ";
 		if (e2->nodeType == NODE_VAR)
 			cout << "_"<<e2->varName<<", %eax"<<endl;
 		else if (e2->nodeType == NODE_CONST)
-			cout << "%"<<e2->int_val<<", %eax"<<endl;
+			cout << "$"<<e2->int_val<<", %eax"<<endl;
 		else cout << "t" << e2->temp_var<<", %eax"<<endl;
+        if(t->label.true_label!="")
         cout << "\tjle " << t->label.true_label << endl;
+        if(t->label.false_label!="")
 		cout << "\tjmp " << t->label.false_label << endl;
 		break;
     case OP_GT:
@@ -823,15 +1010,17 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout << "\tcmpl ";
 		if (e2->nodeType == NODE_VAR)
 			cout << "_"<<e2->varName<<", %eax"<<endl;
 		else if (e2->nodeType == NODE_CONST)
-			cout << "%"<<e2->int_val<<", %eax"<<endl;
+			cout << "$"<<e2->int_val<<", %eax"<<endl;
 		else cout << "t" << e2->temp_var<<", %eax"<<endl;
+        if(t->label.true_label!="")
         cout << "\tjg " << t->label.true_label << endl;
+        if(t->label.false_label!="")
 		cout << "\tjmp " << t->label.false_label << endl;
 		break;
     case OP_GE:
@@ -840,15 +1029,17 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout << "\tcmpl ";
 		if (e2->nodeType == NODE_VAR)
 			cout << "_"<<e2->varName<<", %eax"<<endl;
 		else if (e2->nodeType == NODE_CONST)
-			cout << "%"<<e2->int_val<<", %eax"<<endl;
+			cout << "$"<<e2->int_val<<", %eax"<<endl;
 		else cout << "t" << e2->temp_var<<", %eax"<<endl;
+        if(t->label.true_label!="")
         cout << "\tjge " << t->label.true_label << endl;
+        if(t->label.false_label!="")
 		cout << "\tjmp " << t->label.false_label << endl;
 		break;
     case OP_EQ:
@@ -857,15 +1048,17 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout << "\tsubl ";
 		if (e2->nodeType == NODE_VAR)
 			cout << "_"<<e2->varName<<", %eax"<<endl;
 		else if (e2->nodeType == NODE_CONST)
-		    cout <<"%"<<e2->int_val<<", %eax"<<endl;
+		    cout <<"$"<<e2->int_val<<", %eax"<<endl;
 		else cout << "t" << e2->temp_var<<", %eax"<<endl;
+        if(t->label.true_label!="")
 		cout << "\tjz " << t->label.true_label << endl;
+        if(t->label.false_label!="")
 		cout << "\tjmp " << t->label.false_label << endl;
         break;
     case OP_NEQ:
@@ -874,15 +1067,17 @@ void Tree::expr_gen_code(TreeNode *t){
 		if (e1->nodeType == NODE_VAR)
 			cout << "_"<<e1->varName<<", %eax"<<endl;
 		else if (e1->nodeType == NODE_CONST)
-			cout << "%"<<e1->int_val<<", %eax"<<endl;
+			cout << "$"<<e1->int_val<<", %eax"<<endl;
 		else cout << "t" << e1->temp_var<<", %eax"<<endl;
 		cout << "\tsubl ";
 		if (e2->nodeType == NODE_VAR)
 			cout << "_"<<e2->varName<<", %eax"<<endl;
 		else if (e2->nodeType == NODE_CONST)
-		    cout <<"%"<<e2->int_val<<", %eax"<<endl;
+		    cout <<"$"<<e2->int_val<<", %eax"<<endl;
 		else cout << "t" << e2->temp_var<<", %eax"<<endl;
+        if(t->label.true_label!="")
 		cout << "\tjnz " << t->label.true_label << endl;
+        if(t->label.false_label!="")
 		cout << "\tjmp " << t->label.false_label << endl;
         break;
     }

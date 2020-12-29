@@ -1,4 +1,3 @@
-打印符号表: a d i 
 lno@1       @0           block     children: [@1 ]
 lno@2       @1       statement          stmt: declation     children: [@2 @3 ]      sibling: [@8 @26 @36 @57 ]
 lno@2       @2            type          type: int
@@ -61,10 +60,14 @@ lno@15       @58        variable      var_name: c
 lno@15       @59      expression      operator: +     valuetype: int     children: [@60 @61 ]
 lno@15       @60        variable      var_name: a
 lno@15       @61        variable      var_name: v
-# my asm code header here
+
+
+
+# define strings here
+.section   .data
 
 # define variables and temp variables here
-	.bss
+.section .bss
 _a:
 	.zero	4
 	.align	4
@@ -110,80 +113,66 @@ t10:
 t11:
 	.zero	4
 	.align	4
-
-# your asm code here
-	.text
-	.globl _start
-								STMT_DECL
-								STMT_ASSIGN: 3
-	movl %1, %eax
-	addl %2, %eax
+.section .text
+	.globl main
+main:
+	movl $1, %eax
+	addl $2, %eax
 	movl %eax, t0
 	movl t0, %eax
 	movl %eax, _a
-								STMT_IFELSE: 8
-	movl %2, %eax
-	cmpl %1, %eax
-	jg @0
-	jmp @2
-@0:
-								STMT_DECL
-								STMT_ASSIGN: 15
+	movl $2, %eax
+	cmpl $1, %eax
+	jg _0
+	jmp _2
+_0:
 	movl _a, %eax
 	addl _c, %eax
 	movl %eax, t2
 	movl t2, %eax
 	movl %eax, _d
-	jmp @1
-@2:
-								STMT_ASSIGN: 21
+	jmp _1
+_2:
 	movl _d, %eax
 	addl _c, %eax
 	movl %eax, t3
 	movl t3, %eax
 	movl %eax, _a
-@1:
-								STMT_WHILE: 26
-@3:
+_1:
+_3:
 	movl _a, %eax
 	cmpl _b, %eax
-	jg @4
-	jmp @5
-@4:
-								STMT_ASSIGN: 31
+	jg _4
+	jmp _5
+_4:
 	movl _n, %eax
 	addl _d, %eax
 	movl %eax, t5
 	movl t5, %eax
 	movl %eax, _m
-	jmp@3
-@5:
-								STMT_FOR: 36
-								STMT_DECL
-								STMT_ASSIGN: 39
-	movl %0, %eax
+	jmp _3
+_5:
+	movl $0, %eax
 	movl %eax, _i
-@6:
+_6:
 	movl _i, %eax
-	cmpl %4, %eax
-	jl @9
-	jmp @8
-@9:
+	cmpl $4, %eax
+	jl _9
+	jmp _8
+_9:
 	movl _i, %eax
-	cmpl %5, %eax
-	jg @7
-	jmp @8
-@7:
-								STMT_ASSIGN: 52
+	cmpl $5, %eax
+	jg _7
+	jmp _8
+_7:
 	movl _n, %eax
 	addl _d, %eax
 	movl %eax, t10
 	movl t10, %eax
 	movl %eax, _m
 	incl _i
-	jmp @6
-@8:
-								STMT_ASSIGN: 57
+	jmp _6
+_8:
 	movl _a, %eax
 	addl _v, %eax
 	movl %eax, t11

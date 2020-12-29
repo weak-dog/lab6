@@ -24,10 +24,10 @@ int main(int argc, char *argv[])
     yyparse();
     Tree tree(root);
     if(tree.root != NULL) {
-        sb.display();
+        //sb.display();
         tree.root->genNodeId();
         tree.root->printAST();
-        tree.type_check(root);
+        //tree.type_check(root);
         tree.get_temp_var(root);
         tree.get_label();
         tree.gen_code();

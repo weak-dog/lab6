@@ -3,6 +3,7 @@
     #define YYSTYPE TreeNode *
     TreeNode* root;
     symbolTable sb;
+    strTable st;
     extern int lineno;
     int yylex();
     int yyerror( char const * );
@@ -119,7 +120,7 @@ assign_stmt:
 ;
 
 if_stmt:
-  IF LP expr RP statements ELSE block {
+  IF LP expr RP block ELSE block {
     $$=new TreeNode($3->lineno,NODE_STMT);
     $$->sType=STMT_IFELSE;
     $$->child[0]=$3;
@@ -225,7 +226,6 @@ while_stmt:
 jump_stmt:
   BREAK {$$=$1;}
 | CONTINUE {$$=$1;}
-| RETURN {$$=$1;}
 | RETURN expr {$$=$1;$$->child[0]=$2;}
 ;
 
@@ -319,7 +319,7 @@ expr:
     $$->valType=VALUE_INT;
     $$->child[0]=$2;
 }
-| INC IDENTIFIER {//TODO change or not
+| INC IDENTIFIER {
     $$=new TreeNode($2->lineno,NODE_EXPR);
     $$->opType=OP_INC;
     $$->valType=VALUE_INT;

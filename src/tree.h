@@ -56,6 +56,11 @@ enum StmtType
 {
     STMT_DECL,      //声明语句
     STMT_ASSIGN,    //赋值语句
+    STMT_ADD_ASSIGN,
+    STMT_SUB_ASSIGN,
+    STMT_MUL_ASSIGN,
+    STMT_DIV_ASSIGN,
+    STMT_MOD_ASSIGN,
     STMT_RETURN,    //返回语句
     STMT_IFELSE,    //条件语句
     STMT_WHILE,     //while循环
@@ -86,6 +91,14 @@ public:
     void display();
 };
 
+//字符串表
+class strTable{
+public:
+    int seq=0;
+    string str[MAX_ID];
+    int insert(string s);
+    void display();
+};
 //树节点
 class TreeNode {
 public:
@@ -103,6 +116,7 @@ public:
     int int_val;                    //int型常量的值
     int bool_val;                   //bool型常量的值
     string str_val;                 //字符串常量的值
+    int str_seq;                    //字符串常量对应的变量的序号
 public:
     TreeNode(int lineno, int type); //构造函数         
     void addSibling(TreeNode*);     //添加兄弟结点
@@ -124,6 +138,7 @@ public:
     TreeNode* root;                                     //根节点
     int label_seq=0;                                    //下一个生成标签的序号
     int temp_var_seq = 0;                               //临时变量的序号
+    int str_seq=0;                                      //字符串的序号
 public:
     Tree(TreeNode* n);                                  //构造函数√
     void type_check(TreeNode* t);                       //类型检查√
@@ -132,9 +147,11 @@ public:
     void recursive_get_label(TreeNode *t);              //递归获取标签√
     void stmt_get_label(TreeNode *t);                   //语句生成标签√
 	void expr_get_label(TreeNode *t);                   //表达式生成标签√
+    void block_get_label(TreeNode *t);                  //代码块生成标签
     void gen_code();                                    //生成汇编代码
 	void get_temp_var(TreeNode *t);                     //为表达式节点生成临时变量√
     void gen_decl();                                    //全局变量生成代码√
+    void gen_str();                                     //字符串变量生成代码
 	void gen_header();                                  //生成汇编语言头部
 	void recursive_gen_code(TreeNode *t);               //递归生成汇编代码√
 	void stmt_gen_code(TreeNode *t);                    //语句生成汇编代码

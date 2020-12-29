@@ -3,6 +3,7 @@
 #include "common.h"
 #include "main.tab.h"  // yacc header
 int lineno=1;
+extern strTable st;
 %}
 BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
 LINECOMMENT \/\/[^\n]*
@@ -28,8 +29,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "int"   {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->valType=VALUE_INT; yylval=node;return T_INT;}
 "bool"  {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->valType=VALUE_BOOL;yylval=node;return T_BOOL;}
 "char"  {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->valType=VALUE_CHAR;yylval=node;return T_CHAR;}
-"TRUE"  {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->bool_val=true;node->valType=VALUE_BOOL;yylval=node;return TRUE;}
-"FALSE" {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->bool_val=false;node->valType=VALUE_BOOL;yylval=node;return FALSE;}
+"true"  {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->bool_val=true;node->valType=VALUE_BOOL;yylval=node;return TRUE;}
+"false" {TreeNode* node=new TreeNode(lineno,NODE_CONST);node->bool_val=false;node->valType=VALUE_BOOL;yylval=node;return FALSE;}
 "+"   return ADD;
 "-"   return SUB;
 "*"   return MUL;
@@ -60,7 +61,6 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 ";"  return SEMICOLON;
 ","  return COMMA;
 
-"return" return RETURN;
 "continue" {TreeNode* node=new TreeNode(lineno,NODE_STMT);node->sType=STMT_CONTINUE;yylval=node;return CONTINUE;}
 "break"    {TreeNode* node=new TreeNode(lineno,NODE_STMT);node->sType=STMT_BREAK;yylval=node;return BREAK;}
 "return"   {TreeNode* node=new TreeNode(lineno,NODE_STMT);node->sType=STMT_RETURN;yylval=node;return RETURN;}
@@ -98,6 +98,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     node->valType = VALUE_STRING;
     node->str_val=string(yytext);
     yylval=node;
+    node->str_seq=st.insert(node->str_val);
     return STRING;
 }
 
