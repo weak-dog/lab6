@@ -60,7 +60,6 @@ enum StmtType
     STMT_SUB_ASSIGN,//减法赋值语句
     STMT_MUL_ASSIGN,//乘法赋值语句  
     STMT_DIV_ASSIGN,//除法赋值语句
-    STMT_MOD_ASSIGN,//
     STMT_RETURN,    //返回语句
     STMT_IFELSE,    //条件语句
     STMT_WHILE,     //while循环

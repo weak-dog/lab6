@@ -7,7 +7,7 @@ extern chrTable ct;
 void symbolTable::insert(string id){
     if(search(id)){
         //重复定义
-        //cout<<"重复定义符号: "<<id<<endl;
+        cout<<"重复定义符号: "<<id<<endl;
     }else{
         name[size]=id;
         size++;
@@ -193,9 +193,7 @@ string TreeNode::sType2String(int type) {
         case STMT_MUL_ASSIGN:
             return "mul_assign";    
         case STMT_DIV_ASSIGN:
-            return "div_assign";    
-        case STMT_MOD_ASSIGN:
-            return "mod_assign";    
+            return "div_assign";      
         case STMT_RETURN: 
             return "return";       
         case STMT_IFELSE: 
@@ -307,10 +305,6 @@ void Tree::type_check(TreeNode*t){
                             cerr<<"Assign error type at line: "<<t->lineno<<endl;
                         break;
                     case STMT_DIV_ASSIGN:
-                        if(t->child[0]->valType!=t->child[1]->valType)
-                            cerr<<"Assign error type at line: "<<t->lineno<<endl;
-                        break;
-                    case STMT_MOD_ASSIGN:
                         if(t->child[0]->valType!=t->child[1]->valType)
                             cerr<<"Assign error type at line: "<<t->lineno<<endl;
                         break;
@@ -428,7 +422,6 @@ string Tree::new_label(void){
 //递归获取标签
 void Tree::recursive_get_label(TreeNode *t){
     if(t){
-        //cout<<"recursize_get_label: "<<t->nodeID<<endl;
         if(t->nodeType==NODE_STMT)
             stmt_get_label(t);
         if(t->nodeType==NODE_EXPR){
@@ -444,14 +437,11 @@ void Tree::recursive_get_label(TreeNode *t){
 //代码块生成标签
 void Tree::block_get_label(TreeNode *t){
 	for (TreeNode* p = t->child[0];p;p = p->sibling) {
-		//if (p->sibling == NULL)
-            //p->label.next_label = t->label.next_label;
         recursive_get_label(p);
 	}
 }
 //语句生成标签
 void Tree::stmt_get_label(TreeNode *t){
-    //cout<<"stmt_get_label: "<<t->nodeID<<endl;
     TreeNode* e = t->child[0];
 	TreeNode* s1 = t->child[1];
 	TreeNode* s2 = t->child[2];
@@ -497,7 +487,6 @@ void Tree::stmt_get_label(TreeNode *t){
 //表达式生成标签
 void Tree::expr_get_label(TreeNode *t)
 {
-    //cout<<"expr_get_label"<<endl;
 	if (t->valType != VALUE_BOOL)
 		return;
 	TreeNode *e1 = t->child[0];
@@ -609,7 +598,6 @@ void Tree::recursive_gen_code(TreeNode *t){
 }
 //代码块生成汇编代码
 void Tree::block_gen_code(TreeNode *t){
-    //cout<<"\t\t\t\t\t\t\t\tBLOCK: "<<t->nodeID<<endl;
     for(TreeNode*p=t->child[0];p;p=p->sibling){
         recursive_gen_code(p);
     }
@@ -629,7 +617,7 @@ void Tree::stmt_gen_code(TreeNode *t)
             cout<<"\tjmp "<<t->label.begin_label<<endl;
             if(t->label.next_label!="")
                 cout<<t->label.next_label<<":"<<endl;
-            return;
+            break;
         }
         case STMT_FOR:
         {
@@ -646,7 +634,7 @@ void Tree::stmt_gen_code(TreeNode *t)
 		    cout << "\tjmp " << t->label.begin_label << endl;
 		    if (t->label.next_label != "")
 			    cout <<t->label.next_label << ":" << endl;
-		    return;
+		    break;
         }
         case STMT_IFELSE:
         {
@@ -672,8 +660,8 @@ void Tree::stmt_gen_code(TreeNode *t)
 		    }
 		    if (t->label.next_label != "")
 			    cout << t->label.next_label << ":" << endl;
-		    return;
-        }
+		    break;
+        }  
         case STMT_ASSIGN:
         {
             TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
@@ -684,14 +672,12 @@ void Tree::stmt_gen_code(TreeNode *t)
             cout << "\tmovl ";
 		    if (e2->nodeType == NODE_VAR)
 			    cout << "_"<<e2->varName<<", %eax"<<endl;
-                
 		    else if (e2->nodeType == NODE_CONST){
                 if(e2->valType==VALUE_INT)
                     cout << "$" <<e2->int_val<<", %eax"<<endl;
                 if(e2->valType==VALUE_CHAR)
                     cout << "__" <<e2->chr_seq<<", %eax"<<endl;
             }
-			    
             else if(e2->nodeType==NODE_STMT){
                 cout<<"_"<<e2->child[0]->varName<<", %eax"<<endl;
             }
@@ -699,8 +685,8 @@ void Tree::stmt_gen_code(TreeNode *t)
                 cout << "t" << e2->temp_var<<", %eax"<<endl;
             }
 		    cout << "\tmovl %eax, _" << e1->varName << endl;
-		    return;
-        }
+		    break;
+        } 
         case STMT_ADD_ASSIGN:
         {
             TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
@@ -716,7 +702,7 @@ void Tree::stmt_gen_code(TreeNode *t)
             }
             cout<<"\taddl _"<<e1->varName<<", %eax"<<endl;
 		    cout << "\tmovl %eax, _" << e1->varName << endl;
-		    return;
+		    break;
         }
         case STMT_SUB_ASSIGN:
         {
@@ -733,7 +719,7 @@ void Tree::stmt_gen_code(TreeNode *t)
                 cout << "t" << e2->temp_var<<", %eax"<<endl;
             }
 		    cout << "\tmovl %eax, _" << e1->varName << endl;
-		    return;
+		    break;
         }
         case STMT_MUL_ASSIGN:
         {
@@ -750,7 +736,7 @@ void Tree::stmt_gen_code(TreeNode *t)
             }
             cout<<"\timull _"<<e1->varName<<", %eax"<<endl;
 		    cout << "\tmovl %eax, _" << e1->varName << endl;
-		    return;
+		    break;
         }
         case STMT_DIV_ASSIGN://TODO
         {
@@ -767,31 +753,14 @@ void Tree::stmt_gen_code(TreeNode *t)
             else cout<<"t"<<e2->temp_var<<", %ebx"<<endl;
             cout<<"\tidivl %ebx"<<endl;
             cout<<"\tmovl %eax, _"<<e1->varName<<endl;
-            return;
-        }
-        case STMT_MOD_ASSIGN:
-        {
-            TreeNode* e1 = t->child[0]; TreeNode* e2 = t->child[1];
-            cout<<"\tmovl ";
-            cout<<"_"<<e1->varName<<", %edx"<<endl;
-            cout<<"\tmovl %edx, %eax"<<endl;
-            cout<<"\tsarl $31, %edx"<<endl;
-            cout<<"movl ";
-            if(e2->nodeType==NODE_VAR)
-                cout<<"_"<<e2->varName<<", %ebx"<<endl;
-            else if(e2->nodeType==NODE_CONST)
-                cout<<"$"<<e2->int_val<<", %ebx"<<endl;
-            else cout<<"t"<<e2->temp_var<<", %ebx"<<endl;
-            cout<<"\tidivl %ebx"<<endl;
-            cout<<"\tmovl %edx, _"<<e1->varName<<endl;
-            return;
+            break;
         }
         case STMT_DECL:
         {
             TreeNode* e = t->child[1];
             recursive_gen_code(e);
             break;
-        }
+        }  
         case STMT_PRINTF:
         {
             TreeNode* e1=t->child[0];
@@ -850,244 +819,257 @@ void Tree::expr_gen_code(TreeNode *t){
 	TreeNode* e1 = t->child[0];
 	TreeNode* e2 = t->child[1];
 	switch (t->opType) {
-	case OP_ADD:
-	{
-        cout<<"\tmovl ";
-        if(e1->nodeType==NODE_VAR)
-            cout<<"_"<<e1->varName<<", %eax"<<endl;
-        else if(e1->nodeType==NODE_CONST)
-            cout<<"$"<<e1->int_val<<", %eax"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
-        cout<<"\taddl ";
-        if(e2->nodeType==NODE_VAR)
-            cout<<"_"<<e2->varName<<", %eax"<<endl;
-        else if(e2->nodeType==NODE_CONST)
-            cout<<"$"<<e2->int_val<<", %eax"<<endl;
-        else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
-        cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
-		break;
-	}
-	case OP_SUB:
-	{
-		cout<<"\tmovl ";
-        if(e1->nodeType==NODE_VAR)
-            cout<<"_"<<e1->varName<<", %eax"<<endl;
-        else if(e1->nodeType==NODE_CONST)
-            cout<<"$"<<e1->int_val<<", %eax"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
-        cout<<"\tsubl ";
-        if(e2->nodeType==NODE_VAR)
-            cout<<"_"<<e2->varName<<", %eax"<<endl;
-        else if(e2->nodeType==NODE_CONST)
-            cout<<"$"<<e2->int_val<<", %eax"<<endl;
-        else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
-        cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
-		break;
-	}
-	case OP_MUL:{
-		cout<<"\tmovl ";
-        if(e1->nodeType==NODE_VAR)
-            cout<<"_"<<e1->varName<<", %eax"<<endl;
-        else if(e1->nodeType==NODE_CONST)
-            cout<<"$"<<e1->int_val<<", %eax"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
-        cout<<"\timull ";
-        if(e2->nodeType==NODE_VAR)
-            cout<<"_"<<e2->varName<<", %eax"<<endl;
-        else if(e2->nodeType==NODE_CONST)
-            cout<<"$"<<e2->int_val<<", %eax"<<endl;
-        else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
-        cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
-		break;
-    }    
-    case OP_DIV:
-    {
-        cout<<"\tmovl ";
-        if(e1->nodeType==NODE_VAR)
-            cout<<"_"<<e1->varName<<", %edx"<<endl;
-        else if(e1->nodeType==NODE_CONST)
-            cout<<"$"<<e1->int_val<<", %edx"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %edx"<<endl;
-        cout<<"\tmovl %edx, %eax"<<endl;
-        cout<<"\tsarl $31, %edx"<<endl;
-        cout<<"movl ";
-        if(e2->nodeType==NODE_VAR)
-            cout<<"_"<<e2->varName<<", %ebx"<<endl;
-        else if(e2->nodeType==NODE_CONST)
-            cout<<"$"<<e2->int_val<<", %ebx"<<endl;
-        else cout<<"t"<<e2->temp_var<<", %ebx"<<endl;
-        cout<<"\tidivl %ebx"<<endl;
-        cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
-        break;
-    }
-    case OP_MOD:
-    {
-        cout<<"\tmovl ";
-        if(e1->nodeType==NODE_VAR)
-            cout<<"_"<<e1->varName<<", %edx"<<endl;
-        else if(e1->nodeType==NODE_CONST)
-            cout<<"$"<<e1->int_val<<", %edx"<<endl;
-        else cout<<"t"<<e1->temp_var<<", %edx"<<endl;
-        cout<<"\tmovl %edx, %eax"<<endl;
-        cout<<"\tsarl $31, %edx"<<endl;
-        cout<<"\tmovl ";
-        if(e2->nodeType==NODE_VAR)
-            cout<<"_"<<e2->varName<<", %ebx"<<endl;
-        else if(e2->nodeType==NODE_CONST)
-            cout<<"$"<<e2->int_val<<", %ebx"<<endl;
-        else cout<<"t"<<e2->temp_var<<", %ebx"<<endl;
-        cout<<"\tidivl %ebx"<<endl;
-        cout<<"\tmovl %edx, t"<<t->temp_var<<endl;
-        break;
-    }
-    case OP_INC:
-    {
-        cout<<"\tincl _"<<e1->varName<<endl;
-        break;
-    } 
-    case OP_DEC:
-    {
-        cout<<"\tdecl _"<<e1->varName<<endl;
-        break;
-    } 
-    case OP_MINUS:
-    {
-        cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout<<"\tnegl %eax"<<endl;
-        cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
-        break;
-    } 
-    case OP_AND:
-    {
-        recursive_gen_code(e1);
-        if(e1->label.true_label!="")cout<<e1->label.true_label<<":"<<endl;
-        recursive_gen_code(e2);
-        break;
-    }
-    case OP_OR:
-    {
-        recursive_gen_code(e1);
-        if(e1->label.false_label!="")cout<<e1->label.false_label<<":"<<endl;
-        recursive_gen_code(e2);
-        break;
-    }
-    case OP_NOT:
-    {
-        recursive_gen_code(e1);
-        break;
-    }
-    case OP_LT:
-        {cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout << "\tcmpl ";
-		if (e2->nodeType == NODE_VAR)
-			cout << "_"<<e2->varName<<", %eax"<<endl;
-		else if (e2->nodeType == NODE_CONST)
-			cout << "$"<<e2->int_val<<", %eax"<<endl;
-		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        if(t->label.true_label!="")
-            cout << "\tjl " << t->label.true_label << endl;
-        if(t->label.false_label!="")
-		    cout << "\tjmp " << t->label.false_label << endl;
-		break;}
-    case OP_LE:
-        {cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout << "\tcmpl ";
-		if (e2->nodeType == NODE_VAR)
-			cout << "_"<<e2->varName<<", %eax"<<endl;
-		else if (e2->nodeType == NODE_CONST)
-			cout << "$"<<e2->int_val<<", %eax"<<endl;
-		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        if(t->label.true_label!="")
-        cout << "\tjle " << t->label.true_label << endl;
-        if(t->label.false_label!="")
-		cout << "\tjmp " << t->label.false_label << endl;
-		break;}
-    case OP_GT:
-        {cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout << "\tcmpl ";
-		if (e2->nodeType == NODE_VAR)
-			cout << "_"<<e2->varName<<", %eax"<<endl;
-		else if (e2->nodeType == NODE_CONST)
-			cout << "$"<<e2->int_val<<", %eax"<<endl;
-		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        if(t->label.true_label!="")
-        cout << "\tjg " << t->label.true_label << endl;
-        if(t->label.false_label!="")
-		cout << "\tjmp " << t->label.false_label << endl;
-		break;}
-    case OP_GE:
-        {cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout << "\tcmpl ";
-		if (e2->nodeType == NODE_VAR)
-			cout << "_"<<e2->varName<<", %eax"<<endl;
-		else if (e2->nodeType == NODE_CONST)
-			cout << "$"<<e2->int_val<<", %eax"<<endl;
-		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        if(t->label.true_label!="")
-        cout << "\tjge " << t->label.true_label << endl;
-        if(t->label.false_label!="")
-		cout << "\tjmp " << t->label.false_label << endl;
-		break;}
-    case OP_EQ:
-        {cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout << "\tsubl ";
-		if (e2->nodeType == NODE_VAR)
-			cout << "_"<<e2->varName<<", %eax"<<endl;
-		else if (e2->nodeType == NODE_CONST)
-		    cout <<"$"<<e2->int_val<<", %eax"<<endl;
-		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        if(t->label.true_label!="")
-		cout << "\tjz " << t->label.true_label << endl;
-        if(t->label.false_label!="")
-		cout << "\tjmp " << t->label.false_label << endl;
-        break;}
-    case OP_NEQ:
-         {cout << "\tmovl ";
-		if (e1->nodeType == NODE_VAR)
-			cout << "_"<<e1->varName<<", %eax"<<endl;
-		else if (e1->nodeType == NODE_CONST)
-			cout << "$"<<e1->int_val<<", %eax"<<endl;
-		else cout << "t" << e1->temp_var<<", %eax"<<endl;
-		cout << "\tsubl ";
-		if (e2->nodeType == NODE_VAR)
-			cout << "_"<<e2->varName<<", %eax"<<endl;
-		else if (e2->nodeType == NODE_CONST)
-		    cout <<"$"<<e2->int_val<<", %eax"<<endl;
-		else cout << "t" << e2->temp_var<<", %eax"<<endl;
-        if(t->label.true_label!="")
-		cout << "\tjnz " << t->label.true_label << endl;
-        if(t->label.false_label!="")
-		cout << "\tjmp " << t->label.false_label << endl;
-        break;}
+        case OP_ADD:
+        {
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %eax"<<endl;
+            else if(e1->nodeType==NODE_CONST)
+                cout<<"$"<<e1->int_val<<", %eax"<<endl;
+            else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+            cout<<"\taddl ";
+            if(e2->nodeType==NODE_VAR)
+                cout<<"_"<<e2->varName<<", %eax"<<endl;
+            else if(e2->nodeType==NODE_CONST)
+                cout<<"$"<<e2->int_val<<", %eax"<<endl;
+            else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
+            cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
+            break;
+        }
+        case OP_SUB:
+        {
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %eax"<<endl;
+            else if(e1->nodeType==NODE_CONST)
+                cout<<"$"<<e1->int_val<<", %eax"<<endl;
+            else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+            cout<<"\tsubl ";
+            if(e2->nodeType==NODE_VAR)
+                cout<<"_"<<e2->varName<<", %eax"<<endl;
+            else if(e2->nodeType==NODE_CONST)
+                cout<<"$"<<e2->int_val<<", %eax"<<endl;
+            else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
+            cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
+            break;
+        }
+        case OP_MUL:
+        {
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %eax"<<endl;
+            else if(e1->nodeType==NODE_CONST)
+                cout<<"$"<<e1->int_val<<", %eax"<<endl;
+            else cout<<"t"<<e1->temp_var<<", %eax"<<endl;
+            cout<<"\timull ";
+            if(e2->nodeType==NODE_VAR)
+                cout<<"_"<<e2->varName<<", %eax"<<endl;
+            else if(e2->nodeType==NODE_CONST)
+                cout<<"$"<<e2->int_val<<", %eax"<<endl;
+            else cout<<"t"<<e2->temp_var<<", %eax"<<endl;
+            cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
+            break;
+        }    
+        case OP_DIV:
+        {
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %edx"<<endl;
+            else if(e1->nodeType==NODE_CONST)
+                cout<<"$"<<e1->int_val<<", %edx"<<endl;
+            else cout<<"t"<<e1->temp_var<<", %edx"<<endl;
+            cout<<"\tmovl %edx, %eax"<<endl;
+            cout<<"\tsarl $31, %edx"<<endl;
+            cout<<"movl ";
+            if(e2->nodeType==NODE_VAR)
+                cout<<"_"<<e2->varName<<", %ebx"<<endl;
+            else if(e2->nodeType==NODE_CONST)
+                cout<<"$"<<e2->int_val<<", %ebx"<<endl;
+            else cout<<"t"<<e2->temp_var<<", %ebx"<<endl;
+            cout<<"\tidivl %ebx"<<endl;
+            cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
+            break;
+        }
+        case OP_MOD:
+        {
+            cout<<"\tmovl ";
+            if(e1->nodeType==NODE_VAR)
+                cout<<"_"<<e1->varName<<", %edx"<<endl;
+            else if(e1->nodeType==NODE_CONST)
+                cout<<"$"<<e1->int_val<<", %edx"<<endl;
+            else cout<<"t"<<e1->temp_var<<", %edx"<<endl;
+            cout<<"\tmovl %edx, %eax"<<endl;
+            cout<<"\tsarl $31, %edx"<<endl;
+            cout<<"\tmovl ";
+            if(e2->nodeType==NODE_VAR)
+                cout<<"_"<<e2->varName<<", %ebx"<<endl;
+            else if(e2->nodeType==NODE_CONST)
+                cout<<"$"<<e2->int_val<<", %ebx"<<endl;
+            else cout<<"t"<<e2->temp_var<<", %ebx"<<endl;
+            cout<<"\tidivl %ebx"<<endl;
+            cout<<"\tmovl %edx, t"<<t->temp_var<<endl;
+            break;
+        }
+        case OP_INC:
+        {
+            cout<<"\tincl _"<<e1->varName<<endl;
+            break;
+        } 
+        case OP_DEC:
+        {
+            cout<<"\tdecl _"<<e1->varName<<endl;
+            break;
+        } 
+        case OP_MINUS:
+        {
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout<<"\tnegl %eax"<<endl;
+            cout<<"\tmovl %eax, t"<<t->temp_var<<endl;
+            break;
+        } 
+        case OP_AND:
+        {
+            recursive_gen_code(e1);
+            if(e1->label.true_label!="")cout<<e1->label.true_label<<":"<<endl;
+            recursive_gen_code(e2);
+            break;
+        }
+        case OP_OR:
+        {
+            recursive_gen_code(e1);
+            if(e1->label.false_label!="")cout<<e1->label.false_label<<":"<<endl;
+            recursive_gen_code(e2);
+            break;
+        }
+        case OP_NOT:
+        {
+            recursive_gen_code(e1);
+            break;
+        }
+        case OP_LT:
+        {
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout << "\tcmpl ";
+            if (e2->nodeType == NODE_VAR)
+                cout << "_"<<e2->varName<<", %eax"<<endl;
+            else if (e2->nodeType == NODE_CONST)
+                cout << "$"<<e2->int_val<<", %eax"<<endl;
+            else cout << "t" << e2->temp_var<<", %eax"<<endl;
+            if(t->label.true_label!="")
+                cout << "\tjl " << t->label.true_label << endl;
+            if(t->label.false_label!="")
+                cout << "\tjmp " << t->label.false_label << endl;
+            break;
+        }
+        case OP_LE:
+        {   
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout << "\tcmpl ";
+            if (e2->nodeType == NODE_VAR)
+                cout << "_"<<e2->varName<<", %eax"<<endl;
+            else if (e2->nodeType == NODE_CONST)
+                cout << "$"<<e2->int_val<<", %eax"<<endl;
+            else cout << "t" << e2->temp_var<<", %eax"<<endl;
+            if(t->label.true_label!="")
+            cout << "\tjle " << t->label.true_label << endl;
+            if(t->label.false_label!="")
+            cout << "\tjmp " << t->label.false_label << endl;
+            break;
+        }
+        case OP_GT:
+        {
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout << "\tcmpl ";
+            if (e2->nodeType == NODE_VAR)
+                cout << "_"<<e2->varName<<", %eax"<<endl;
+            else if (e2->nodeType == NODE_CONST)
+                cout << "$"<<e2->int_val<<", %eax"<<endl;
+            else cout << "t" << e2->temp_var<<", %eax"<<endl;
+            if(t->label.true_label!="")
+            cout << "\tjg " << t->label.true_label << endl;
+            if(t->label.false_label!="")
+            cout << "\tjmp " << t->label.false_label << endl;
+            break;
+        }
+        case OP_GE:
+        {
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout << "\tcmpl ";
+            if (e2->nodeType == NODE_VAR)
+                cout << "_"<<e2->varName<<", %eax"<<endl;
+            else if (e2->nodeType == NODE_CONST)
+                cout << "$"<<e2->int_val<<", %eax"<<endl;
+            else cout << "t" << e2->temp_var<<", %eax"<<endl;
+            if(t->label.true_label!="")
+            cout << "\tjge " << t->label.true_label << endl;
+            if(t->label.false_label!="")
+            cout << "\tjmp " << t->label.false_label << endl;
+            break;
+        }
+        case OP_EQ:
+        {
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout << "\tsubl ";
+            if (e2->nodeType == NODE_VAR)
+                cout << "_"<<e2->varName<<", %eax"<<endl;
+            else if (e2->nodeType == NODE_CONST)
+                cout <<"$"<<e2->int_val<<", %eax"<<endl;
+            else cout << "t" << e2->temp_var<<", %eax"<<endl;
+            if(t->label.true_label!="")
+            cout << "\tjz " << t->label.true_label << endl;
+            if(t->label.false_label!="")
+            cout << "\tjmp " << t->label.false_label << endl;
+            break;
+        }
+        case OP_NEQ:
+        {
+            cout << "\tmovl ";
+            if (e1->nodeType == NODE_VAR)
+                cout << "_"<<e1->varName<<", %eax"<<endl;
+            else if (e1->nodeType == NODE_CONST)
+                cout << "$"<<e1->int_val<<", %eax"<<endl;
+            else cout << "t" << e1->temp_var<<", %eax"<<endl;
+            cout << "\tsubl ";
+            if (e2->nodeType == NODE_VAR)
+                cout << "_"<<e2->varName<<", %eax"<<endl;
+            else if (e2->nodeType == NODE_CONST)
+                cout <<"$"<<e2->int_val<<", %eax"<<endl;
+            else cout << "t" << e2->temp_var<<", %eax"<<endl;
+            if(t->label.true_label!="")
+            cout << "\tjnz " << t->label.true_label << endl;
+            if(t->label.false_label!="")
+            cout << "\tjmp " << t->label.false_label << endl;
+            break;
+        }
     }
 }
