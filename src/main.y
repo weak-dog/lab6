@@ -30,7 +30,7 @@
 %%
 
 statements: 
-  MAIN LB statements RB {$$=new TreeNode(1,NODE_COMP);$$->child[0]=$3;root=$$;}
+  MAIN LP RP LB statements RB {$$=new TreeNode(1,NODE_COMP);$$->child[0]=$5;root=$$;}
 | statements statement {$$=$1;$$->addSibling($2);}
 | statement {$$=$1;}
 ;

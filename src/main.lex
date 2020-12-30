@@ -72,7 +72,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "scanf"  return SCANF;
 "printf" return PRINTF;
 
-"int main()" {
+"int main" {
     TreeNode* node=new TreeNode(lineno,NODE_STMT);
     node->sType=STMT_MAIN;
     yylval=node;

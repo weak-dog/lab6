@@ -1,4 +1,4 @@
-int main(){
+int main (){
     char s;
     char t;
     char a;

@@ -56,11 +56,11 @@ enum StmtType
 {
     STMT_DECL,      //声明语句
     STMT_ASSIGN,    //赋值语句
-    STMT_ADD_ASSIGN,
-    STMT_SUB_ASSIGN,
-    STMT_MUL_ASSIGN,
-    STMT_DIV_ASSIGN,
-    STMT_MOD_ASSIGN,
+    STMT_ADD_ASSIGN,//加法赋值语句
+    STMT_SUB_ASSIGN,//减法赋值语句
+    STMT_MUL_ASSIGN,//乘法赋值语句  
+    STMT_DIV_ASSIGN,//除法赋值语句
+    STMT_MOD_ASSIGN,//
     STMT_RETURN,    //返回语句
     STMT_IFELSE,    //条件语句
     STMT_WHILE,     //while循环
